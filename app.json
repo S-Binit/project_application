@@ -1,5 +1,6 @@
 {
   "expo": {
+    "scheme": "projectapp",
     "name": "Project_application",
     "slug": "Project_application",
     "version": "1.0.0",
@@ -24,6 +25,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-router"
+    ]
   }
 }
