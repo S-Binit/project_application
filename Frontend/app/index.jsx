@@ -3,21 +3,33 @@ import {Link} from 'expo-router'
 import Logo from '../assets/img/logo.png'
 import React from 'react'
 
+//themed components
+import ThemedView from '../components/ThemedView'
+import ThemedLogo from '../components/ThemedLogo'
+import Spacer from '../components/Spacer'
+import ThemedText from '../components/ThemedText'
+
 const Home = () => {
   return (
-    <View style={styles.container}>
+    <ThemedView style={styles.container}>
       <View style={styles.imgcontainer}>
-        <Image source={Logo} style={styles.image}/>
+        <ThemedLogo style={styles.image}/>
       </View>
-      <Text style={styles.title}>The Number 1</Text>
+      <ThemedText style={styles.title} title ={true}>The Number 1</ThemedText>
 
-      <Text style={{marginTop: 10, marginBottom: 30}}>Smart Waste Tracker</Text>
+      <Spacer height={10}/>
+      <ThemedText>Smart Waste Tracker</ThemedText>
+      <Spacer/>
 
-      <Link href="/about" style={styles.link}>About Page</Link>
+      <Link href="/about" style={styles.link}>
+      <ThemedText>About Page</ThemedText>
+      </Link>
 
-      <Link href="/contact" style={styles.link}>Contact Page</Link>
+      <Link href="/contact" style={styles.link}>
+      <ThemedText>Contact Page</ThemedText>
+      </Link>
 
-    </View>
+    </ThemedView>
   )
 }
 
@@ -46,6 +58,6 @@ const styles = StyleSheet.create({
   },
   link:{
     marginVertical: 10,
-    borderBottomWidth: 1
+    borderBottomWidth: 1,
   }
 })
