@@ -3,9 +3,9 @@ export const Colors = {
     warning: '#cc475a',
 
     dark: {
-        text: '#d4d4d4', //fixed #fffffff6
-        title: '#ffffffff', //fixed #ffffffff
-        background: '#252231', //fixed ,dark green #042619
+        text: '#d4d4d4',
+        title: '#ffffffff',
+        background: '#252231', //dark green #042619
         navBackground: '#201e2b',
         iconColor: '#9591a5',
         iconColorFocused: '#fff',
