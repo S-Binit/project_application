@@ -1,5 +1,5 @@
 import { StyleSheet, Pressable, Text } from 'react-native'
-import { Link } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import { Colors } from '../../constants/Colors'
 import React from 'react'
 
@@ -11,9 +11,12 @@ import ThemedButton from '../../components/ThemedButton'
 
 
 const Login = () => {
+    const router = useRouter()
 
     const handleSubmit = () => {
         console.log('login form submitted')
+        // Navigate to dashboard after login
+        router.push('/home')
     }
 
   return (

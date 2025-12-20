@@ -1,5 +1,5 @@
 import { StyleSheet, Text } from 'react-native'
-import { Link } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import React from 'react'
 
 //themed components
@@ -10,9 +10,12 @@ import Spacer from '../../components/Spacer'
 
 
 const Register = () => {
+    const router = useRouter()
 
     const handleSubmit = () => {
         console.log('register form submitted')
+        // Navigate to login after register
+        router.push('/login')
     }
     
   return (
