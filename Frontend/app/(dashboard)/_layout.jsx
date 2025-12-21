@@ -25,7 +25,7 @@ const DashboardLayout = () => {
             options={{title: 'Home', tabBarIcon: ({focused}) => (
                 <Ionicons
                     size={24}
-                    name={focused ? 'home' : 'home-outline'}
+                    name={focused ? 'map' : 'map-outline'}
                     color={focused ? theme.iconColorFocused : theme.iconColor}
                 />
             )}}

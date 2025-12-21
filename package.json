@@ -1,5 +1,14 @@
 {
   "dependencies": {
-    "@expo/vector-icons": "^15.0.3"
+    "@expo/vector-icons": "^15.0.3",
+    "expo-app-loading": "^2.1.1",
+    "expo-font": "~14.0.10",
+    "expo-linear-gradient": "~15.0.8",
+    "nativewind": "^4.2.1",
+    "react-native-heroicons": "^4.0.0",
+    "react-native-svg": "^15.15.1"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
   }
 }
