@@ -31,7 +31,7 @@ const Home = () => {
         <ThemedLogo style={styles.image} />
       </View>
 
-      <ThemedText style={styles.title}>Welcome!</ThemedText>
+      <ThemedText style={styles.title} title={true}>Welcome!</ThemedText>
       <ThemedText style={{fontSize: 16}}>Track garbage trucks in real-time for a cleaner city</ThemedText>
 
       </ThemedView>
