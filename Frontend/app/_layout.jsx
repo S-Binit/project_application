@@ -11,7 +11,7 @@ const RootLayout = () => {
   return (
     <>
       <StatusBar value="auto"/> 
-      <Stack initialRouteName="index" screenOptions={{
+      <Stack initialRouteName="index" screenOptions={{headerShown: false, 
         headerStyle: {backgroundColor: theme.navBackground},
         headerTintColor: theme.title,
       }}>
