@@ -27,7 +27,7 @@ const Register = () => {
     </ThemedText>
 
     <ThemedButton onPress={handleSubmit}>
-        <Text style={{color: '#f2f2f2'}}>Register</Text>
+        <Text style={{color: '#000'}}>Register</Text>
     </ThemedButton>
 
     <Spacer height={100}/>
