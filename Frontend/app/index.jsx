@@ -80,8 +80,8 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   imgcontainer: {
-    width: 175,        
-    height: 175,       
+    width: 200,        
+    height: 200,       
     borderRadius: 20, 
     overflow: 'hidden',
     marginBottom: 20,
