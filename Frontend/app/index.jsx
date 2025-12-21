@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, Pressable } from 'react-native'
+import { StyleSheet, Text, View, Image, Pressable, } from 'react-native'
 import {Link, useRouter} from 'expo-router'
 import Logo from '../assets/img/logo.png'
 import React from 'react'
@@ -25,32 +25,32 @@ const Home = () => {
       }
 
   return (
-
     <><ThemedView style={styles.WelcomeText}>
 
       <View style={styles.imgcontainer}>
         <ThemedLogo style={styles.image} />
       </View>
 
-      <ThemedText style={styles.title} >Welcome!</ThemedText>
+      <ThemedText style={styles.title}>Welcome!</ThemedText>
 
-    </ThemedView>
-    
-    <ThemedView style={styles.container}>
+      </ThemedView>
 
-    <ThemedButton onPress={gologin}>
-      <Text style={{color: '#000', fontSize: 18}}>LOGIN</Text>
-    </ThemedButton>
+          <ThemedView style={styles.container}>
 
-    <ThemedButton onPress={goregister}>
-      <Text style={{color: '#000', fontSize: 18}}>SIGN UP</Text>
-    </ThemedButton>
+            <ThemedButton onPress={gologin} style={{ backgroundColor: '#43A047' }}>
+              <Text style={{ color: '#fff', fontSize: 18 }}>LOGIN</Text>
+            </ThemedButton>
 
-      <Link href="/profile" style={styles.link}>
-        <ThemedText>Profile Page</ThemedText>
-      </Link>
+            <ThemedButton onPress={goregister}>
+              <Text style={{ color: '#43A047', fontSize: 18 }}>SIGN UP</Text>
+            </ThemedButton>
 
-    </ThemedView></>
+            <Link href="/profile" style={styles.link}>
+              <ThemedText>Profile Page</ThemedText>
+            </Link>
+
+          </ThemedView></>
+        
   )
 }
 
@@ -61,6 +61,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  background: {
+    flex: 1,
+    width: 'auto',
+    height: 'auto',
   },
   WelcomeText: {
     flex: 1,
