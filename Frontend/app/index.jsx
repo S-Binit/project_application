@@ -7,7 +7,7 @@ import React from 'react'
 
 //themed components
 import ThemedView from '../components/ThemedView'
-import ThemedLogo from '../components/ThemedLogo'
+import ThemedLogo1 from '../components/ThemedLogo'
 import Spacer from '../components/Spacer'
 import ThemedText from '../components/ThemedText'
 import ThemedButton from '../components/ThemedButton'
@@ -28,7 +28,7 @@ const Home = () => {
     <><ThemedView style={styles.WelcomeText}>
 
       <View style={styles.imgcontainer}>
-        <ThemedLogo style={styles.image} />
+        <ThemedLogo1 style={styles.image} />
       </View>
 
       <ThemedText style={styles.title} title={true}>Welcome!</ThemedText>
