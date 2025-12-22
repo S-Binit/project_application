@@ -16,13 +16,17 @@ import ThemedButton from '../../components/ThemedButton';
 import ThemedRegisterLogo from '../../components/ThemedRegisterLogo';
 
 const Register = () => {
-    const router = useRouter()
+    const router = useRouter();
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
-    const handleSubmit = () => {
-        console.log('register form submitted')
-        // Navigate to login after register
-        router.push('/login')
-    }
+    const handleSignUp = () => {
+    // Add registration logic here later
+    console.log('Sign Up:', { name, email, password });
+    router.push('/home');
+  };
     
   return (
     <ThemedView style={styles.container}>
@@ -49,9 +53,82 @@ const Register = () => {
                 <View style={styles.imgcontainer}>
                     <ThemedRegisterLogo style={styles.image} />
                 </View>
-                <ThemedText style={styles.title} title={true}>Sign Up</ThemedText>
+                <ThemedText style={styles.title} title={true}>Create an account</ThemedText>
             </ThemedView>
 
+            <Spacer height={40}/>
+
+            {/* {Name Input} */}
+            <View style={styles.inputWrapper}>
+                <Ionicons name="person-outline" size={24} color="#666" style={styles.inputIcon} />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Enter full name"
+                    placeholderTextColor="#999"
+                    value={name}
+                    onChangeText={setName}
+                    autoCapitalize="words"
+                />
+            </View>
+
+            <Spacer height={20} />
+
+            {/* {Email Input} */}
+            <View style={styles.inputWrapper}>
+                <Ionicons name="mail-outline" size={24} color="#666" style={styles.inputIcon} />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Enter email"
+                    placeholderTextColor="#999"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                />
+            </View>
+
+            <Spacer height={20} />
+
+            {/* {Password Input} */}
+            <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={24} color="#666" style={styles.inputIcon} />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Create password"
+                    placeholderTextColor="#999"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={24}
+                        color="#666"
+                    />
+                </TouchableOpacity>
+            </View>
+
+            <Spacer height={40} />
+
+            {/* Solid Green Sign Up Button */}
+            <TouchableOpacity onPress={handleSignUp} style={styles.signInButton}>
+                <Text style={styles.buttonText}>Sign Up</Text>
+            </TouchableOpacity>
+
+            {/* <Spacer height={5} /> */}
+
+           {/* Login Link - Only "Sign In" clickable */}
+            <View style={styles.registerContainer}>
+                <ThemedText style={styles.registerText}>
+                    Already have an account?{' '}
+                    <Link href="/login">
+                        <Text style={styles.signUpLink}>Log In</Text>
+                    </Link>
+                </ThemedText>
+            </View> 
+
+            <Spacer height={100}/>
             </ScrollView>
         </KeyboardAvoidingView>
     </ThemedView>
@@ -73,6 +150,12 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 20,
         backgroundColor: 'rgba(255,255,255,0.8)',
+    },
+    scrollContent: {
+        paddingHorizontal: 30,
+        // paddingBottom: 10,
+        flexGrow: 0,
+        justifyContent: 'center',
     },
     HeadLogo: {
         flex: 1,
@@ -97,4 +180,46 @@ const styles = StyleSheet.create({
         marginTop: 16,
         justifyContent: 'flex-end',
     },
-})
+    inputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+        borderRadius: 12,
+        paddingHorizontal: 15,
+        height: 56,
+        width: '100%',
+    },
+    inputIcon: {
+        marginRight: 12,
+    },
+    input: {
+        flex: 1,
+        fontSize: 16,
+        color: '#000',
+    },
+    signInButton: {
+        width: '100%',
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#43A047',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    registerContainer: {
+        marginTop: 30,
+    },
+    registerText: {
+        textAlign: 'center',
+        fontSize: 16,
+        color: '#666',
+    },
+    signUpLink: {
+        fontWeight: 'bold',
+        color: '#43A047',
+    },
+});

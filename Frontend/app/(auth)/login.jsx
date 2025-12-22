@@ -123,7 +123,7 @@ const Login = () => {
                 <Text style={styles.buttonText}>Log In</Text>
             </TouchableOpacity>
 
-            <Spacer height={30} />
+            {/* <Spacer height={5} /> */}
 
             {/* {Register Link} */}
             <View style={styles.registerContainer}>
