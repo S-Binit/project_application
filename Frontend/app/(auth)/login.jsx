@@ -48,6 +48,8 @@ const Login = () => {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
+
+                {/* {login Logo} */}
             <ThemedView style={styles.HeadLogo}>
                 <View style={styles.imgcontainer}>
                     <ThemedLoginLogo style={styles.image} />

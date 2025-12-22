@@ -1,13 +1,19 @@
-import { StyleSheet, Text } from 'react-native'
-import { Link, useRouter } from 'expo-router'
-import React from 'react'
+import React, {useState} from 'react';
+import { 
+    StyleSheet, Pressable, Text, TouchableOpacity, View, TextInput, KeyboardAvoidingView, Platform,
+    ScrollView
+        } from 'react-native';
+import { Link, useRouter } from 'expo-router';
+import { Colors } from '../../constants/Colors'
+import { Ionicons} from '@expo/vector-icons';
+
 
 //themed components
-import ThemedText from '../../components/ThemedText'
-import ThemedView from '../../components/ThemedView'
-import ThemedButton from '../../components/ThemedButton'
-import Spacer from '../../components/Spacer'
-
+import ThemedText from '../../components/ThemedText';
+import ThemedView from '../../components/ThemedView';
+import Spacer from '../../components/Spacer';
+import ThemedButton from '../../components/ThemedButton';
+import ThemedRegisterLogo from '../../components/ThemedRegisterLogo';
 
 const Register = () => {
     const router = useRouter()
@@ -20,23 +26,34 @@ const Register = () => {
     
   return (
     <ThemedView style={styles.container}>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{flex: 1 }}>
 
-    <Spacer/>
-    <ThemedText title={true} style={styles.title}>
-        Register For an Account
-    </ThemedText>
+            {/* {Back Button} */}
+            <TouchableOpacity
+                onPress={()=>router.back()}
+                style={styles.backButton}
+                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+                <Ionicons name="arrow-back" size={28} color="#000"/>
+            </TouchableOpacity>
 
-    <ThemedButton onPress={handleSubmit}>
-        <Text style={{color: '#000'}}>Register</Text>
-    </ThemedButton>
+            <ScrollView
+                contentContainerStyle={styles.scrollContent} //Extra bottom padding
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+            >
 
-    <Spacer height={100}/>
-    <Link href='/login'>
-        <ThemedText style={{textAlign: 'center'}}>
-            Login instead
-        </ThemedText>
-    </Link>
+            {/* {register logo} */}
+             <ThemedView style={styles.HeadLogo}>
+                <View style={styles.imgcontainer}>
+                    <ThemedRegisterLogo style={styles.image} />
+                </View>
+                <ThemedText style={styles.title} title={true}>Sign Up</ThemedText>
+            </ThemedView>
 
+            </ScrollView>
+        </KeyboardAvoidingView>
     </ThemedView>
   )
 }
@@ -46,12 +63,38 @@ export default Register
 const styles = StyleSheet.create({
     container:{
         flex: 1,
-        justifyContent: "center",
-        alignItems: 'center'
+        position: 'relative',
     },
-    title: {
-        textAlign: "center",
-        fontSize: 18,
-        marginBottom: 30
+    backButton:{
+        position: 'absolute',
+        top: 50,
+        left: 20,
+        zIndex: 10,
+        padding: 10,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.8)',
+    },
+    HeadLogo: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingTop: 70,
+    },
+    imgcontainer: {
+        width: 200,        
+        height: 200,       
+        borderRadius: 20, 
+        overflow: 'hidden',
+        marginBottom: 20,
+    },
+    image: {
+        width: '100%',
+        height: '100%',
+    },
+    title:{
+        fontWeight:'bold',
+        fontSize: 22,
+        marginTop: 16,
+        justifyContent: 'flex-end',
     },
 })
