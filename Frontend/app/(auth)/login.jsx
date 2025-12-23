@@ -54,7 +54,7 @@ const Login = () => {
                 <View style={styles.imgcontainer}>
                     <ThemedLoginLogo style={styles.image} />
                 </View>
-                <ThemedText style={styles.title} title={true}>Log In To Smart Waste Tracker</ThemedText>
+                <ThemedText style={styles.title} title={true}>Log In to Smart Waste Tracker</ThemedText>
             </ThemedView>
 
             <Spacer height={40}/>
@@ -126,14 +126,14 @@ const Login = () => {
             {/* <Spacer height={5} /> */}
 
             {/* {Register Link} */}
-            <View style={styles.registerContainer}>
+            <ThemedView style={styles.registerContainer}>
                 <ThemedText style={styles.registerText}>
                     Don't have an account?{' '}
                     <Link href="/register">
-                        <Text style={styles.signUpLink}>Sign Up</Text>
+                        <ThemedText style={styles.signUpLink}>Sign Up</ThemedText>
                     </Link>
                 </ThemedText>
-            </View>
+            </ThemedView>
 
             {/* {spacer at bottom to prevent overlap} */}
             <Spacer height={100}/>
@@ -245,13 +245,11 @@ const styles = StyleSheet.create({
     registerText: {
         textAlign: 'center',
         fontSize: 16,
-        color: '#666',
     },
     registerContainer: {
         marginTop: 30,
     },
     signUpLink:{
         fontWeight: 'bold',
-        color: '#201f1fff',
     },
 });

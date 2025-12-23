@@ -221,7 +221,6 @@ const styles = StyleSheet.create({
     registerText: {
         textAlign: 'center',
         fontSize: 16,
-        color: '#666',
     },
     signUpLink: {
         fontWeight: 'bold',

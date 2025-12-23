@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View, Image, Pressable, } from 'react-native'
 import {Link, useRouter} from 'expo-router'
-import Logo from '../assets/img/logo.png'
 import React from 'react'
 
 //fonts
@@ -121,7 +120,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: '#fff',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: 'bold',
   },
 })
