@@ -28,7 +28,7 @@ const DriverLogin = () => {
     const handleSignIn = () => {
             //Add validation or API call here later
         console.log('Sign In:',{email,password,rememberMe});
-        router.push('/home')
+        router.push('/(driverdashboard)/home')
     };
 
   return (
