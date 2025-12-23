@@ -112,7 +112,7 @@ const Register = () => {
             <Spacer height={40} />
 
             {/* Solid Green Sign Up Button */}
-            <TouchableOpacity onPress={handleSignUp} style={styles.signInButton}>
+            <TouchableOpacity onPress={handleSignUp} style={styles.signUpButton}>
                 <Text style={styles.buttonText}>Sign Up</Text>
             </TouchableOpacity>
 
@@ -188,6 +188,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         height: 56,
         width: '100%',
+        
     },
     inputIcon: {
         marginRight: 12,
@@ -197,13 +198,17 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#000',
     },
-    signInButton: {
+    signUpButton: {
         width: '100%',
         height: 56,
         borderRadius: 28,
         backgroundColor: '#43A047',
         justifyContent: 'center',
         alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 4,
+        elevation: 5,
     },
     buttonText: {
         color: '#fff',

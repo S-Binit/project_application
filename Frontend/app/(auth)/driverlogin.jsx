@@ -10,13 +10,15 @@ import { Ionicons} from '@expo/vector-icons';
 
 //themed components
 import ThemedText from '../../components/ThemedText';
-import ThemedView from '../../components/ThemedView';
+//import ThemedView from '../../components/ThemedView';
 import Spacer from '../../components/Spacer';
 import ThemedButton from '../../components/ThemedButton';
-import ThemedLoginLogo from '../../components/ThemedLoginLogo';
+import ThemedDriverLoginLogo from '../../components/ThemedDriverLoginLogo';
+import ThemedViewDriver from '../../components/ThemedViewDriver';
 
 
-const Login = () => {
+const DriverLogin = () => {
+
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -30,7 +32,7 @@ const Login = () => {
     };
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedViewDriver style={styles.container}>
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{flex: 1 }}>
@@ -50,12 +52,12 @@ const Login = () => {
             >
 
                 {/* {login Logo} */}
-            <ThemedView style={styles.HeadLogo}>
+            <ThemedViewDriver style={styles.HeadLogo}>
                 <View style={styles.imgcontainer}>
-                    <ThemedLoginLogo style={styles.image} />
+                    <ThemedDriverLoginLogo style={styles.image} />
                 </View>
-                <ThemedText style={styles.title} title={true}>Log In To Smart Waste Tracker</ThemedText>
-            </ThemedView>
+                <ThemedText style={styles.title} title={true}>Log In as Driver</ThemedText>
+            </ThemedViewDriver>
 
             <Spacer height={40}/>
 
@@ -106,7 +108,7 @@ const Login = () => {
                     <Ionicons
                         name={rememberMe ? 'checkbox-outline' : 'square-outline'}
                         size={24}
-                        color="#43A047"
+                        color="#4DA4EA"
                     />
                     <ThemedText style={styles.rememberText}>Remember me</ThemedText>
                 </TouchableOpacity>
@@ -123,27 +125,15 @@ const Login = () => {
                 <Text style={styles.buttonText}>Log In</Text>
             </TouchableOpacity>
 
-            {/* <Spacer height={5} /> */}
-
-            {/* {Register Link} */}
-            <View style={styles.registerContainer}>
-                <ThemedText style={styles.registerText}>
-                    Don't have an account?{' '}
-                    <Link href="/register">
-                        <Text style={styles.signUpLink}>Sign Up</Text>
-                    </Link>
-                </ThemedText>
-            </View>
-
             {/* {spacer at bottom to prevent overlap} */}
             <Spacer height={100}/>
             </ScrollView>
         </KeyboardAvoidingView>
-    </ThemedView>
+    </ThemedViewDriver>
   );
 };
 
-export default Login
+export default DriverLogin
 
 const styles = StyleSheet.create({
     container:{
@@ -222,14 +212,14 @@ const styles = StyleSheet.create({
         fontSize: 15,
     },
     forgotText: {
-        color: '#43A047',
+        color: '#4DA4EA',
         fontSize: 15,
     },
     signInButton: {
         width: '100%',
         height: 56,
         borderRadius: 28,
-        backgroundColor: '#43A047', 
+        backgroundColor: '#4DA4EA', 
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',

@@ -24,6 +24,11 @@ const Home = () => {
           router.push('/register')
       }
 
+      const godriverlogin = () => {
+        //Navigate to driver login page
+        router.push('/driverlogin')
+      }
+
   return (
     <><ThemedView style={styles.WelcomeText}>
 
@@ -39,17 +44,31 @@ const Home = () => {
           <ThemedView style={styles.container}>
 
             <ThemedButton onPress={gologin} style={{ backgroundColor: '#43A047' }}>
-              <Text style={{ color: '#fff', fontSize: 18 }}>LOGIN</Text>
+              <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>LOGIN</Text>
             </ThemedButton>
 
             <ThemedButton onPress={goregister}>
-              <Text style={{ color: '#43A047', fontSize: 18 }}>SIGN UP</Text>
+              <Text style={{ color: '#43A047', fontSize: 18, fontWeight: 'bold' }}>SIGN UP</Text>
             </ThemedButton>
 
-            <Link href="/profile" style={styles.link}>
-              <ThemedText>Profile Page</ThemedText>
-            </Link>
+          <Spacer height={25}/>  
 
+            {/* {driver login button} */}
+            <Pressable
+              onPress={godriverlogin}
+              style={({ pressed }) => [
+              styles.button,
+                { backgroundColor: pressed ? '#4DA4EA' : '#4DA4EA' },  // Darker when pressed
+                { opacity: pressed ? 0.5 : 1 },
+              ]}
+            >
+              {({ pressed }) => (
+                <Text style={styles.text}>
+                  {pressed ? 'DRIVER LOGIN' : 'DRIVER LOGIN'}
+                </Text>
+              )}
+            </Pressable>
+        
           </ThemedView></>
         
   )
@@ -91,8 +110,18 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  link:{
-    marginVertical: 10,
-    borderBottomWidth: 1,
-  }
+  button: {
+    padding: 10,
+    borderRadius: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 4,
+    elevation: 5,
+  },
+  text: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: 'bold',
+  },
 })
