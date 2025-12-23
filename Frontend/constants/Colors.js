@@ -22,13 +22,4 @@ export const Colors = {
         iconColorFocused: '#201e2b',
         uiBackground: '#d6d5e1',
     },
-    light_driver: {
-        text: '#191F1D',
-        title: '#000000ff',
-        background: '#86beebff',
-        navBackground: '#e8e7ef',
-        iconColor: '#686477',
-        iconColorFocused: '#201e2b',
-        uiBackground: '#d6d5e1',
-    },
 }

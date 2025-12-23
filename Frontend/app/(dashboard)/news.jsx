@@ -9,7 +9,7 @@ const Profile = () => {
         <ThemedView style={styles.container} safe={true}>
 
             <ThemedText title={true} style={styles.heading}>
-                Your Email
+                User Dashboard
             </ThemedText>
             <Spacer/>
 

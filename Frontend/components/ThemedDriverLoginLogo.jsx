@@ -1,7 +1,7 @@
 import {Image, useColorScheme} from 'react-native'
 
 //images
-import DarkDriverLoginLogo from '../assets/img/Login_Logo_dark.png'
+import DarkDriverLoginLogo from '../assets/img/LoginDriver_Logo_dark.png'
 import LightDriverLoginLogo from '../assets/img/LoginDriver_Logo_light.png'
 
 const ThemedLoginLogo = ({...props }) => {
