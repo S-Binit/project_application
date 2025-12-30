@@ -1,11 +1,12 @@
 import React, {useState} from 'react';
 import { 
     StyleSheet, Pressable, Text, TouchableOpacity, View, TextInput, KeyboardAvoidingView, Platform,
-    ScrollView
+    ScrollView, Alert
         } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors'
 import { Ionicons} from '@expo/vector-icons';
+import { API_URL } from '../../constants/API';
 
 
 //themed components
@@ -15,18 +16,77 @@ import Spacer from '../../components/Spacer';
 import ThemedButton from '../../components/ThemedButton';
 import ThemedRegisterLogo from '../../components/ThemedRegisterLogo';
 
+// API base URL is centralized in constants/API.js
+
 const Register = () => {
     const router = useRouter();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleSignUp = () => {
-    // Add registration logic here later
-    console.log('Sign Up:', { name, email, password });
-    router.push('/home');
-  };
+    const handleSignUp = async () => {
+        // Clear previous error
+        setError('');
+
+        // Validation
+        if (!name.trim() || !email.trim() || !password.trim()) {
+            setError('All fields are required');
+            return;
+        }
+
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const response = await fetch(`${API_URL}/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name.trim(),
+                    email: email.trim().toLowerCase(),
+                    password: password,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Success! Token received
+                console.log('✅ Registration successful!');
+                console.log('Token:', data.token);
+                console.log('User:', data.user);
+                
+                                // Show confirmation then return to welcome
+                                Alert.alert(
+                                    'Sign up complete',
+                                    'Your account has been created.',
+                                    [
+                                        {
+                                            text: 'OK',
+                                            onPress: () => router.replace('/'),
+                                        },
+                                    ],
+                                );
+            } else {
+                // Server returned error
+                setError(data.message || 'Registration failed');
+            }
+        } catch (err) {
+            console.error('Registration error:', err);
+            setError('Cannot connect to server. Make sure backend is running.');
+        } finally {
+            setLoading(false);
+        }
+    };
     
   return (
     <ThemedView style={styles.container}>
@@ -57,6 +117,16 @@ const Register = () => {
             </ThemedView>
 
             <Spacer height={40}/>
+
+            {/* Error Message */}
+            {error ? (
+                <View style={styles.errorContainer}>
+                    <Ionicons name="alert-circle" size={20} color="#ff3b30" />
+                    <Text style={styles.errorText}>{error}</Text>
+                </View>
+            ) : null}
+
+            {error ? <Spacer height={20} /> : null}
 
             {/* {Name Input} */}
             <View style={styles.inputWrapper}>
@@ -112,8 +182,14 @@ const Register = () => {
             <Spacer height={40} />
 
             {/* Solid Green Sign Up Button */}
-            <TouchableOpacity onPress={handleSignUp} style={styles.signUpButton}>
-                <Text style={styles.buttonText}>Sign Up</Text>
+            <TouchableOpacity 
+                onPress={handleSignUp} 
+                style={[styles.signUpButton, loading && styles.buttonDisabled]}
+                disabled={loading}
+            >
+                <Text style={styles.buttonText}>
+                    {loading ? 'Creating Account...' : 'Sign Up'}
+                </Text>
             </TouchableOpacity>
 
             {/* <Spacer height={5} /> */}
@@ -188,11 +264,26 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         height: 56,
         width: '100%',
-        
     },
     inputIcon: {
         marginRight: 12,
     },
+        buttonDisabled: {
+            opacity: 0.6,
+        },
+        errorContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#ffebee',
+            padding: 12,
+            borderRadius: 8,
+            gap: 8,
+        },
+        errorText: {
+            color: '#ff3b30',
+            fontSize: 14,
+            flex: 1,
+        },
     input: {
         flex: 1,
         fontSize: 16,

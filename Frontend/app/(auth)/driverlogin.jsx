@@ -3,9 +3,11 @@ import {
     StyleSheet, Pressable, Text, TouchableOpacity, View, TextInput, KeyboardAvoidingView, Platform,
     ScrollView
         } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors'
 import { Ionicons} from '@expo/vector-icons';
+import { API_URL } from '../../constants/API';
 
 
 //themed components
@@ -17,18 +19,68 @@ import ThemedDriverLoginLogo from '../../components/ThemedDriverLoginLogo';
 import ThemedViewDriver from '../../components/ThemedViewDriver';
 
 
+// API base URL is centralized in constants/API.js
+
 const DriverLogin = () => {
 
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState('');
-    const [rememberMe, setRememberMe] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleSignIn = () => {
-            //Add validation or API call here later
-        console.log('Sign In:',{email,password,rememberMe});
-        router.push('/(driverdashboard)/home')
+    const handleSignIn = async () => {
+        // Clear previous error
+        setError('');
+
+        // Validation
+        if (!email.trim() || !password.trim()) {
+            setError('Email and password are required');
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const response = await fetch(`${API_URL}/driver/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email.trim().toLowerCase(),
+                    password: password,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Success! Token received
+                console.log('✅ Driver login successful!');
+                console.log('Token:', data.token);
+                console.log('Driver:', data.user);
+                
+                // Save token and user data to AsyncStorage
+                await AsyncStorage.setItem('token', data.token);
+                await AsyncStorage.setItem('userRole', data.user.role);
+                await AsyncStorage.setItem('userId', data.user.id);
+                await AsyncStorage.setItem('userName', data.user.name || '');
+                
+                // Navigate to driver dashboard
+                router.push('/(driverdashboard)/home');
+            } else {
+                // Server returned error
+                setError(data.message || 'Login failed');
+            }
+        } catch (err) {
+            console.error('Driver login error:', err);
+            setError('Cannot connect to server. Make sure backend is running.');
+        } finally {
+            setLoading(false);
+        }
     };
 
   return (
@@ -60,6 +112,16 @@ const DriverLogin = () => {
             </ThemedViewDriver>
 
             <Spacer height={40}/>
+
+            {/* Error Message */}
+            {error ? (
+                <View style={styles.errorContainer}>
+                    <Ionicons name="alert-circle" size={20} color="#ff3b30" />
+                    <Text style={styles.errorText}>{error}</Text>
+                </View>
+            ) : null}
+
+            {error ? <Spacer height={20} /> : null}
 
             {/* {Email Input} */}
             <View style={styles.inputWrapper}>
@@ -121,8 +183,14 @@ const DriverLogin = () => {
             <Spacer height={40}/>
 
             {/* {Sign In Button} */}
-            <TouchableOpacity onPress={handleSignIn} style={styles.signInButton}>
-                <Text style={styles.buttonText}>Log In</Text>
+            <TouchableOpacity 
+                onPress={handleSignIn} 
+                style={[styles.signInButton, loading && styles.buttonDisabled]}
+                disabled={loading}
+            >
+                <Text style={styles.buttonText}>
+                    {loading ? 'Signing In...' : 'Log In'}
+                </Text>
             </TouchableOpacity>
 
             {/* {spacer at bottom to prevent overlap} */}
@@ -161,11 +229,26 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'flex-start',
-        paddingTop: 70,
     },
     imgcontainer: {
         width: 200,        
         height: 200,       
+        buttonDisabled: {
+            opacity: 0.6,
+        },
+        errorContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#ffebee',
+            padding: 12,
+            borderRadius: 8,
+            gap: 8,
+        },
+        errorText: {
+            color: '#ff3b30',
+            fontSize: 14,
+            flex: 1,
+        },
         borderRadius: 20, 
         overflow: 'hidden',
         marginBottom: 20,
