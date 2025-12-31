@@ -11,7 +11,7 @@ import Spacer from '../components/Spacer'
 import ThemedText from '../components/ThemedText'
 import ThemedButton from '../components/ThemedButton'
 
-const Home = () => {
+const RootIndex = () => {
   const router = useRouter()
   
       const gologin = () => {
@@ -73,7 +73,7 @@ const Home = () => {
   )
 }
 
-export default Home
+export default RootIndex
 
 const styles = StyleSheet.create({
   container: {

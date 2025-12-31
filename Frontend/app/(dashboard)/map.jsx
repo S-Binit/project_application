@@ -4,7 +4,7 @@ import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
 import ThemedView from "../../components/ThemedView"
 
-const Profile = () => {
+const Map1 = () => {
     return (
         <ThemedView style={styles.container}>
 
@@ -20,7 +20,7 @@ const Profile = () => {
     )
 }
 
-export default Profile
+export default Map1
 const styles = StyleSheet.create({
     container:{
         flex: 1,

@@ -50,16 +50,6 @@ const DashboardLayout = () => {
                 />
             )}}
         />
-        <Tabs.Screen 
-            name="profile" 
-            options={{title: 'Profile', tabBarIcon: ({focused}) => (
-                <Ionicons
-                    size={24}
-                    name={focused ? 'person' : 'person-outline'}
-                    color={focused ? theme.iconColorFocused : theme.iconColor}
-                />
-            )}}
-        />
     </Tabs>      
   )
 }
