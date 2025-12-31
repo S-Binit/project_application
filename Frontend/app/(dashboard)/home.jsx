@@ -13,10 +13,16 @@ const Home1 = () => {
         <ThemedView style={styles.container} safe={true}>
 
             <TouchableOpacity
-                onPress={()=>router.push('/(profiledashboard)/profile')}
+                onPress={()=>router.push('/(innerdashboard)/profile')}
                 style={styles.profileButton}
                 hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
                 <Ionicons name="person" size={28} color="#000"/>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                onPress={()=>router.push('/(innerdashboard)/notification')}
+                style={styles.notifButton}>
+                <Ionicons name="notifications-outline" size={28} color="#000"/>
             </TouchableOpacity>
 
             <ThemedText title={true} style={styles.heading}>
@@ -51,5 +57,14 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 25,
         backgroundColor: 'rgba(255,255,255,0.8)',
+    },
+    notifButton:{
+        position: 'absolute',
+        top: 50,
+        right: 80,
+        zIndex: 10,
+        padding: 10,
+        borderRadius: 25,
+        backgroundColor: 'rgba(255,255,255,0)',
     },
 })
