@@ -4,7 +4,7 @@ import {Image, useColorScheme} from 'react-native'
 import DashboardDarkMainLogo from '../assets/img/DashboardLogo_dark.png'
 import DashboardLightMainLogo from '../assets/img/DashboardLogo_light.png'
 
-const ThemedLogo = ({...props }) => {
+const ThemedDashLogo = ({...props }) => {
     const colorScheme = useColorScheme()
 
     const logo = colorScheme === 'dark' ? DashboardDarkMainLogo : DashboardLightMainLogo
@@ -14,4 +14,4 @@ const ThemedLogo = ({...props }) => {
     )
 }
 
-export default ThemedLogo
+export default ThemedDashLogo
