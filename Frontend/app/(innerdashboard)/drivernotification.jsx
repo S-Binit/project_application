@@ -1,0 +1,31 @@
+import {StyleSheet} from 'react-native'
+
+import Spacer from "../../components/Spacer"
+import ThemedText from "../../components/ThemedText"
+import ThemedViewDriver from "../../components/ThemedViewDriver"
+
+const Notification2 = () => {
+    return (
+        <ThemedViewDriver style={styles.container} safe={true}>
+
+            <ThemedText title={true} style={styles.heading}>
+            Driver Notifications
+            </ThemedText>
+
+        </ThemedViewDriver>
+    )
+}
+
+export default Notification2
+const styles = StyleSheet.create({
+    container:{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    heading:{
+        fontWeight: "bold",
+        fontSize: 18,
+        textAlign: "center",
+    },
+})
