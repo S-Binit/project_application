@@ -10,6 +10,7 @@ export const Colors = {
         background: '#0C2825',
         navBackground: '#141414ff',
         iconColor: '#9591a5',
+        ioniconColor: '#fff',
         iconColorFocused: '#fff',
         uiBackground: '#2f2b3d',
     },
@@ -19,6 +20,7 @@ export const Colors = {
         background: '#C3DED4', //light mint-green'ish
         navBackground: '#e8e7ef',
         iconColor: '#686477',
+        ioniconColor: '#000',
         iconColorFocused: '#201e2b',
         uiBackground: '#d6d5e1',
     },

@@ -6,7 +6,7 @@ import ThemedViewDriver from "../../components/ThemedViewDriver"
 
 const Profile2 = () => {
     return (
-        <ThemedViewDriver style={styles.container} safe={true}>
+        <ThemedViewDriver style={styles.container} ssafe={true}>
 
             <ThemedText title={true} style={styles.heading}>
                 Driver Dashboard

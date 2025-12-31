@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
 import ThemedViewDriver from "../../components/ThemedViewDriver"
+import ThemedIonicons from '../../components/ThemedIonIcons';
 
 const Profile2 = () => {
     const router = useRouter();
@@ -16,13 +17,13 @@ const Profile2 = () => {
                 onPress={()=>router.push('/(innerdashboard)/driverprofile')}
                 style={styles.profileButton}
                 hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-                <Ionicons name="person" size={28} color="#000"/>
+                <ThemedIonicons name="person" size={28}/>
             </TouchableOpacity>
 
             <TouchableOpacity
                 onPress={()=>router.push('/(innerdashboard)/drivernotification')}
                 style={styles.notifButton}>
-                <Ionicons name="notifications-outline" size={28} color="#000"/>
+                <ThemedIonicons name="notifications-outline" size={28}/>
             </TouchableOpacity>
 
             <ThemedText title={true} style={styles.heading}>
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
         zIndex: 10,
         padding: 10,
         borderRadius: 25,
-        backgroundColor: 'rgba(255,255,255,0.8)',
+        backgroundColor: 'rgba(255, 255, 255, 0.59)',
     },
     notifButton:{
         position: 'absolute',

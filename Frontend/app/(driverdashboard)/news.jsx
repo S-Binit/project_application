@@ -4,7 +4,7 @@ import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
 import ThemedViewDriver from "../../components/ThemedViewDriver"
 
-const Profile = () => {
+const News2 = () => {
     return (
         <ThemedViewDriver style={styles.container} safe={true}>
 
@@ -20,7 +20,7 @@ const Profile = () => {
     )
 }
 
-export default Profile
+export default News2
 const styles = StyleSheet.create({
     container:{
         flex: 1,
