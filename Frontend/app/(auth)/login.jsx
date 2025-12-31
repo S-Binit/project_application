@@ -97,6 +97,8 @@ const Login = () => {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
+                
+            <Spacer height={80}/>
 
                 {/* {login Logo} */}
             <ThemedView style={styles.HeadLogo}>

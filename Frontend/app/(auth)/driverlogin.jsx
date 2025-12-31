@@ -103,6 +103,8 @@ const DriverLogin = () => {
                 keyboardShouldPersistTaps="handled"
             >
 
+            <Spacer height={80}/>
+               
                 {/* {login Logo} */}
             <ThemedViewDriver style={styles.HeadLogo}>
                 <View style={styles.imgcontainer}>
