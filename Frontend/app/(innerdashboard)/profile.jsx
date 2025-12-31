@@ -8,6 +8,12 @@ const Profile1 = () => {
     return (
         <ThemedView style={styles.container} safe={true}>
 
+            <ThemedView style={styles.HeadLogo}>
+                <View style={styles.imgcontainer}>
+                    <ThemedLoginLogo style={styles.image} />
+                </View>
+            </ThemedView>
+
             <ThemedText title={true} style={styles.heading}>
                 User Dashboard
             </ThemedText>

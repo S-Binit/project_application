@@ -1,4 +1,4 @@
-import {StyleSheet, TouchableOpacity} from 'react-native'
+import {StyleSheet, TouchableOpacity, View} from 'react-native'
 import { Ionicons} from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
@@ -6,12 +6,17 @@ import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
 import ThemedView from "../../components/ThemedView"
 import ThemedIonicons from '../../components/ThemedIonIcons';
+import ThemedDashLogo from '../../components/ThemedDashLogo';
 
 const Home1 = () => {
     const router = useRouter();
 
     return (
         <ThemedView style={styles.container} safe={true}>
+
+            <View style={styles.logoContainer}>
+                <ThemedDashLogo style={styles.logo} />
+            </View>
 
             <TouchableOpacity
                 onPress={()=>router.push('/(innerdashboard)/profile')}
@@ -67,5 +72,16 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 25,
         backgroundColor: 'rgba(255,255,255,0)',
+    },
+    logoContainer: {
+        position: 'absolute',
+        top: 19,
+        left: 18,
+        zIndex: 10,
+    },
+    logo: {
+        width: 120,
+        height: 120,
+        resizeMode: 'contain',
     },
 })
