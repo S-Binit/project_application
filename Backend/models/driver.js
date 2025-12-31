@@ -60,6 +60,14 @@ const driverSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    sharingLocation: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    lastLocationAt: {
+      type: Date,
+    },
     location: {
       type: {
         type: String,

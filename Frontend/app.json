@@ -27,7 +27,7 @@
                              "favicon":  "./assets/favicon.png"
                          },
                  "extra":  {
-            "API_URL": "http://IP:5000/api/auth"
+            "API_URL": "http://192.168.18.16:5000/api/auth"
                            },
                  "plugins":  [
                                  "expo-router"
