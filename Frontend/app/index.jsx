@@ -110,13 +110,18 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   button: {
-    padding: 10,
-    borderRadius: 20,
+    width: 275,
+    height: 56,
+    padding: 15,
+    borderRadius: 28,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 4,
     elevation: 5,
+    justifyContent: 'center',
+    alignContent: 'center',
+    
   },
   text: {
     color: '#fff',
