@@ -26,15 +26,9 @@
                  "web":  {
                              "favicon":  "./assets/favicon.png"
                          },
-<<<<<<< HEAD
-                 "extra":  {
-            "API_URL": "http://192.168.1.5:5000/api/auth"
-                           },
-=======
                   "extra":  {
-              "API_URL": "http://192.168.18.16:5000/api/auth"
+              "API_URL": "http://192.168.1.5:5000/api/auth"
                           },
->>>>>>> ee69f3124d0bd12e88488a017bd127906762eecc
                  "plugins":  [
                                  "expo-router"
                              ]

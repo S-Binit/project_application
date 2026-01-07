@@ -4,6 +4,7 @@ import {
     ScrollView
         } from 'react-native';
 import { Link, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../../constants/Colors'
 import { Ionicons} from '@expo/vector-icons';
 import { API_URL } from '../../constants/API';
@@ -60,9 +61,11 @@ const Login = () => {
                 console.log('Token:', data.token);
                 console.log('User:', data.user);
                 
-                // TODO: Save token to AsyncStorage
-                // await AsyncStorage.setItem('token', data.token);
-                // await AsyncStorage.setItem('userRole', data.user.role);
+                // Save token and user data to AsyncStorage
+                await AsyncStorage.setItem('token', data.token);
+                await AsyncStorage.setItem('userRole', data.user.role);
+                await AsyncStorage.setItem('userId', data.user.id);
+                await AsyncStorage.setItem('userName', data.user.name || '');
                 
                 // Navigate to dashboard
                 router.dismissAll();
