@@ -12,16 +12,22 @@ import {LOCATION_URL} from "../../constants/API"
 const DEFAULT_REGION = {
     latitude: 37.78825,
     longitude: -122.4324,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
 }
+
+// Real-time update intervals
+const LOCATION_UPDATE_INTERVAL = 1000 // 1 second
+const LOCATION_DISTANCE_INTERVAL = 5 // 5 meters
 
 const Map2 = () => {
     const [region, setRegion] = useState(DEFAULT_REGION)
     const [status, setStatus] = useState('requesting')
     const [isSharing, setIsSharing] = useState(false)
     const [shareError, setShareError] = useState(null)
+    const [initialCenter, setInitialCenter] = useState(true)
     const watcherRef = useRef(null)
+    const mapRef = useRef(null)
 
     const sendLocationToServer = useCallback(async (coords, sharingFlag) => {
         try {
@@ -64,9 +70,9 @@ const Map2 = () => {
                 setStatus('pending')
                 watcherRef.current = await Location.watchPositionAsync(
                     {
-                        accuracy: Location.Accuracy.Balanced,
-                        timeInterval: 5000,
-                        distanceInterval: 10,
+                        accuracy: Location.Accuracy.High, // Higher accuracy for drivers
+                        timeInterval: LOCATION_UPDATE_INTERVAL,
+                        distanceInterval: LOCATION_DISTANCE_INTERVAL,
                     },
                     async ({coords}) => {
                         if (!isMounted) return
@@ -78,6 +84,16 @@ const Map2 = () => {
                         }
                         setRegion(nextRegion)
                         setStatus('ready')
+                        
+                        // Center map only on first location lock
+                        if (initialCenter && mapRef.current) {
+                            setTimeout(() => {
+                                mapRef.current?.animateToRegion(nextRegion, 1000)
+                                setInitialCenter(false)
+                            }, 300)
+                        }
+                        
+                        // Send location updates in real-time when sharing
                         if (isSharing) {
                             await sendLocationToServer(coords, true)
                         }
@@ -124,18 +140,27 @@ const Map2 = () => {
         <ThemedViewDriver style={styles.container}>
             <View style={styles.mapWrapper}>
                 <MapView
+                    ref={mapRef}
                     style={styles.map}
                     initialRegion={DEFAULT_REGION}
-                    region={hasLocation ? region : undefined}
                     showsUserLocation
                     showsMyLocationButton
                     loadingEnabled
+                    // Performance optimizations
+                    tracksViewChanges={false}
+                    zoomEnabled={true}
+                    rotateEnabled={true}
+                    pitchEnabled={true}
+                    scrollEnabled={true}
+                    provider="google"
                 >
                     {hasLocation && (
                         <Marker
                             coordinate={region}
                             title="Driver (you)"
-                            description="Live driver location"
+                            description={`Live driver location${isSharing ? ' • SHARING' : ''}`}
+                            pinColor={isSharing ? "#4CAF50" : "#FFA726"}
+                            tracksViewChanges={false}
                         />
                     )}
                 </MapView>
