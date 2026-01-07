@@ -70,7 +70,8 @@ const DriverLogin = () => {
                 await AsyncStorage.setItem('userName', data.user.name || '');
                 
                 // Navigate to driver dashboard
-                router.push('/(driverdashboard)/home');
+                router.dismissAll();
+                router.replace('/(driverdashboard)/home');
             } else {
                 // Server returned error
                 setError(data.message || 'Login failed');

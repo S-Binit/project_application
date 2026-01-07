@@ -1,11 +1,14 @@
-import {StyleSheet, View, ScrollView, RefreshControl} from 'react-native'
+import {StyleSheet, View, ScrollView, RefreshControl, TouchableOpacity} from 'react-native'
 import { useCallback, useState } from 'react';
+import { useRouter } from 'expo-router';
 
 import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
 import ThemedView from "../../components/ThemedView"
+import ThemedIonicons from '../../components/ThemedIonIcons';
 
 const Notification1 = () => {
+    const router = useRouter();
     const [refreshing, setRefreshing] = useState(false);
 
     const onRefresh = useCallback(() => {
@@ -21,7 +24,19 @@ const Notification1 = () => {
                 <ThemedText title={true} style={styles.heading}>
                     Notifications
                 </ThemedText>
+
+                <TouchableOpacity
+                        onPress={()=>{
+                            router.back();
+                        }}
+                        style={styles.backButton}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                        <ThemedIonicons name="chevron-back" size={26}/>
+                </TouchableOpacity>
+
             </ThemedView>
+
+            
 
             {/* Scrollable Content */}
             <ThemedView style={styles.body}>
@@ -66,6 +81,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f0f7f5ff',
     },
     header: {
+        height: 100,
         paddingBottom: 20,
         paddingHorizontal: 15,
         paddingVertical: 15,
@@ -110,5 +126,16 @@ const styles = StyleSheet.create({
     newsItem: {
         fontSize: 16,
         textAlign: 'center',
+    },
+    backButton:{
+        padding: 6,
+        borderRadius: 20,
+        backgroundColor: 'transparent',
+        height: 40,
+        width: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignContent: 'center',
+        marginTop: -35,
     },
 })

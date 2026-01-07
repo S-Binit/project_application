@@ -11,9 +11,13 @@ const RootLayout = () => {
   return (
     <>
       <StatusBar value="auto"/> 
-      <Stack initialRouteName="index" screenOptions={{headerShown: false, 
+      <Stack initialRouteName="index" screenOptions={{
+        headerShown: false, 
         headerStyle: {backgroundColor: theme.navBackground},
         headerTintColor: theme.title,
+        animation: 'slide_from_right',
+        gestureDirection: "horizontal",
+        transitionStyle: "default",
       }}>
         <Stack.Screen name='(auth)' options={{headerShown: false}}/>
         <Stack.Screen name='(dashboard)' options={{headerShown: false}}/>

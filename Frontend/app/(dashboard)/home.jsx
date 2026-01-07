@@ -42,6 +42,7 @@ const Profile1 = () => {
                         <ThemedIonicons name="person" size={26}/>
                     </TouchableOpacity>
                 </View>
+
             </ThemedView>
 
             {/* Scrollable Content */}
@@ -99,6 +100,8 @@ const Profile1 = () => {
 
 export default Profile1
 
+const headerHeight = Platform.OS === 'android' ? 135 : 100;
+
 const styles = StyleSheet.create({
     container:{
         flex: 1,
@@ -108,13 +111,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#fafafa',
     },
     header: {
-        height: 135,
+        height: headerHeight,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 15,
         paddingVertical: 5,
-        paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ? StatusBar.currentHeight - -20 : 0) : 5,
+        paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ? StatusBar.currentHeight + 20 : 0) : 5,
         borderBottomWidth: 0.5,
         backgroundColor: 'inherit',
         zIndex: 100,
@@ -136,6 +139,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 15,
+
     },
     notifButton:{
         padding: 8,

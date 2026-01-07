@@ -65,7 +65,8 @@ const Login = () => {
                 // await AsyncStorage.setItem('userRole', data.user.role);
                 
                 // Navigate to dashboard
-                router.push('/(dashboard)/home');
+                router.dismissAll();
+                router.replace('/(dashboard)/home');
             } else {
                 // Server returned error
                 setError(data.message || 'Login failed');

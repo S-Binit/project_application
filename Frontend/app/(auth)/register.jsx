@@ -72,7 +72,10 @@ const Register = () => {
                                     [
                                         {
                                             text: 'OK',
-                                            onPress: () => router.replace('/'),
+                                            onPress: () => {
+                                                router.dismissAll();
+                                                router.replace('/');
+                                            },
                                         },
                                     ],
                                 );
