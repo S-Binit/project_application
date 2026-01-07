@@ -161,10 +161,16 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 2,
     },
+    actionButtonDanger:{
+        borderColor: '#c51610',
+    },
     actionText:{
         fontSize: 16,
         fontWeight: '600',
         color: '#2c3330',
+    },
+    actionTextDanger:{
+        color: '#c51610',
     },
     actionIcon:{
         marginRight: 8,
