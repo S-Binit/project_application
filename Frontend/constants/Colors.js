@@ -17,11 +17,11 @@ export const Colors = {
     light: {
         text: '#191F1D', 
         title: '#000000ff', 
-        background: '#C3DED4', //light mint-green'ish
-        navBackground: '#e8e7ef',
-        iconColor: '#686477',
+        background: '#C3DED4', //light mint-green'ish #C3DED4
+        navBackground: '#FFFFFF',
+        iconColor: '#757575',
         ioniconColor: '#000',
-        iconColorFocused: '#201e2b',
+        iconColorFocused: '#007aff',
         uiBackground: '#d6d5e1',
     },
 }

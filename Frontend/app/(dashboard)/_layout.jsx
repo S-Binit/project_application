@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router"
-import { useColorScheme } from "react-native"
+import { useColorScheme, Platform } from "react-native"
 import { Colors } from "../../constants/Colors"
 import {Ionicons} from '@expo/vector-icons'
 
@@ -14,7 +14,12 @@ const DashboardLayout = () => {
             tabBarStyle:{
                 backgroundColor: theme.navBackground, 
                 paddingTop: 10,
-                height: 100
+                height: 100,
+                shadowColor:  '#000',
+                shadowOffset: { width: 0, height: -3 },
+                shadowOpacity: 0.1,
+                shadowRadius: 3,
+                elevation: 5,
                 },
                 tabBarActiveTintColor: theme.iconColorFocused,
                 tabBarInactiveTintColor: theme.iconColor
