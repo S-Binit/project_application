@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fafafa',
     },
     header: {
-        height: 150,
+        height: 135,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
