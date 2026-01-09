@@ -1,7 +1,7 @@
-import {StyleSheet, TouchableOpacity, View, ScrollView, Platform, StatusBar, RefreshControl} from 'react-native'
+import {StyleSheet, TouchableOpacity, View, ScrollView, Platform, StatusBar, RefreshControl, Image} from 'react-native'
 import { Ionicons} from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 
 import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
@@ -12,6 +12,54 @@ import ThemedDashLogo from '../../components/ThemedDashLogo';
 const Profile1 = () => {
     const router = useRouter();
     const [refreshing, setRefreshing] = useState(false);
+    const [currentDate, setCurrentDate] = useState('');
+    const [truckStatus, setTruckStatus] = useState('active'); // 'active' or 'inactive'
+
+    // Update date on mount and every minute
+    useEffect(() => {
+        const updateDate = () => {
+            const today = new Date();
+            
+            // Nepali months (Bikram Sambat)
+            const nepaliMonths = [
+                'Baisakh', 'Jestha', 'Asar', 'Shrawan', 'Bhadra', 'Ashoj',
+                'Kartik', 'Mangsir', 'Poush', 'Magh', 'Falgun', 'Chaitra'
+            ];
+            
+            // Nepali days of week
+            const nepaliDays = [
+                'Sunday', 'Monday', 'Tuesday', 'Wednesday', 
+                'Thursday', 'Friday', 'Saturday'
+            ];
+            
+            // Calculate Bikram Sambat year
+            const month = today.getMonth();
+            const day = today.getDate();
+            const nepaliYear = (month < 3 || (month === 3 && day < 13)) 
+                ? today.getFullYear() + 56 
+                : today.getFullYear() + 57;
+            
+            const nepaliMonth = nepaliMonths[month];
+            const nepaliDay = day;
+            const nepaliDayName = nepaliDays[today.getDay()];
+            
+            setCurrentDate(`${nepaliDayName}, ${nepaliMonth} ${nepaliDay}, ${nepaliYear}`);
+            
+            // Determine truck status based on day of week
+            // 0 = Sunday, 2 = Tuesday, 4 = Thursday
+            const activeDays = [0, 2, 4];
+            const isActive = activeDays.includes(today.getDay());
+            setTruckStatus(isActive ? 'active' : 'inactive');
+        };
+        
+        updateDate();
+        
+        const interval = setInterval(() => {
+            updateDate();
+        }, 60000); // Update every minute
+        
+        return () => clearInterval(interval);
+    }, []);
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
@@ -63,35 +111,44 @@ const Profile1 = () => {
                         />
                     }>
                     
+                    {/* Current Date Container */}
+                    <View style={styles.dateContainer}>
+                        <ThemedText style={styles.dateText}>{currentDate}</ThemedText>
+                        <TouchableOpacity 
+                            onPress={() => truckStatus === 'active' && router.push('/(dashboard)/map')}
+                            disabled={truckStatus === 'inactive'}
+                            activeOpacity={truckStatus === 'active' ? 0.7 : 1}
+                        >
+                            <View style={[styles.statusPill, truckStatus === 'active' ? styles.pillActive : styles.pillInactive]}>
+                                <Ionicons name="car" size={18} color="white" style={styles.pillIcon}/>
+                                <ThemedText style={styles.statusText}>
+                                    Truck {truckStatus === 'active' ? 'Active' : 'Inactive'}
+                                </ThemedText>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+                    
+                    {/* New Container */}
+                    <View style={styles.contentContainer}>
+                        <View style={styles.contentBody}>
+                            <Image 
+                                source={require('../../assets/img/like_dislike.png')}
+                                style={styles.containerImage}
+                                resizeMode="contain"
+                            />
+                            <View style={styles.rightTextContainer}>
+                                <ThemedText style={styles.complaintsText}>Complaints</ThemedText>
+                                <ThemedText style={styles.middleText}>and</ThemedText>
+                                <ThemedText style={styles.feedbacksText}>Feedbacks</ThemedText>
+                            </View>
+                        </View>
+                        <TouchableOpacity style={styles.reportButton}>
+                            <ThemedText style={styles.reportButtonText}>Report Here →</ThemedText>
+                        </TouchableOpacity>
+                    </View>
                     
                     {/* Add more content here to test scrolling */}
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-                    <ThemedText style={styles.heading}>Welcome to the Home Screen</ThemedText>
-
+                
                 </ScrollView>
             </ThemedView>
         </View>
@@ -166,5 +223,121 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginTop: 10,
         marginBottom: 10,
+    },
+    dateContainer: {
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 20,
+        borderLeftWidth: 4,
+        borderLeftColor: '#4CAF50',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    dateText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#4CAF50',
+        flex: 1,
+    },
+    statusPill: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+        marginLeft: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    pillActive: {
+        backgroundColor: '#4CAF50',
+    },
+    pillInactive: {
+        backgroundColor: '#999',
+    },
+    pillIcon: {
+        marginRight: 2,
+    },
+    statusText: {
+        color: '#FFF',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    contentContainer: {
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+        marginBottom: 20,
+        minHeight: 180,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+        justifyContent: 'space-between',
+    },
+    contentBody: {
+        flex: 1,
+        justifyContent: 'center',
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    containerImage: {
+        width: 120,
+        height: 120,
+        marginRight: 20,
+        marginLeft: 20,
+    },
+    rightTextContainer: {
+        alignItems: 'flex-end',
+        marginRight: 20,
+        flex: 1,
+        justifyContent: 'center',
+    },
+    complaintsText: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#EF5350',
+        textAlign: 'right',
+    },
+    feedbacksText: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1976D2',
+        textAlign: 'right',
+    },
+    headerText: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#333',
+        textAlign: 'right',
+    },
+    middleText: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#333',
+        textAlign: 'center',
+        marginVertical: 2,
+        width: '100%',
+        marginHorizontal: -32,
+    },
+    reportButton: {
+        backgroundColor: '#4CAF50',
+        paddingVertical: 16,
+        alignItems: 'center',
+        width: '100%',
+        borderBottomLeftRadius: 12,
+        borderBottomRightRadius: 12,
+    },
+    reportButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: '600',
     },
 })
