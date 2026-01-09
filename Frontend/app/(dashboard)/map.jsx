@@ -58,18 +58,6 @@ const Map1 = () => {
                         return data.drivers
                     })
                     
-                    // Only auto-center on first load or when switching drivers
-                    if (initialLoad && data.drivers.length > 0) {
-                        const first = data.drivers[0]?.location
-                        if (first?.latitude && first?.longitude) {
-                            setRegion(curr => ({
-                                ...curr,
-                                latitude: first.latitude,
-                                longitude: first.longitude,
-                            }))
-                            setInitialLoad(false)
-                        }
-                    }
                     setError(null)
                 } else {
                     setDrivers([])
@@ -120,15 +108,6 @@ const Map1 = () => {
                         }
                         
                         setUserLocation(coord)
-
-                        // Only center on user if no drivers present and first time
-                        if (initialLoad && drivers.length === 0) {
-                            setRegion(current => ({
-                                ...current,
-                                latitude: coord.latitude,
-                                longitude: coord.longitude,
-                            }))
-                        }
                     }
                 )
             } catch (_err) {
@@ -142,35 +121,29 @@ const Map1 = () => {
             isMounted = false
             locationWatcherRef.current?.remove()
         }
-    }, [drivers.length, initialLoad])
+    }, [])
 
-    // Auto-center map only once when markers are first loaded
+    // Auto-center map on user's location when first location is obtained
     useEffect(() => {
-        if (!mapRef.current || !initialLoad) return
-        
-        const coords = []
-        drivers.forEach(d => {
-            if (d.location?.latitude && d.location?.longitude) {
-                coords.push({
-                    latitude: d.location.latitude,
-                    longitude: d.location.longitude,
-                })
-            }
-        })
-        if (userLocation) coords.push(userLocation)
-        if (coords.length === 0) return
+        if (!userLocation || !initialLoad) return
 
-        // Center the map on markers once
+        const newRegion = {
+            latitude: userLocation.latitude,
+            longitude: userLocation.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+        }
+        setRegion(newRegion)
+        
+        // Use setTimeout to ensure MapView is ready
         setTimeout(() => {
             if (mapRef.current) {
-                mapRef.current.fitToCoordinates(coords, {
-                    edgePadding: { top: 250, right: 250, bottom: 250, left: 250 },
-                    animated: true,
-                })
-                setInitialLoad(false) // Disable future auto-centering
+                mapRef.current.animateToRegion(newRegion, 1000)
             }
         }, 500)
-    }, [drivers.length, userLocation, initialLoad])
+        
+        setInitialLoad(false)
+    }, [userLocation, initialLoad])
 
     const hasDriver = drivers.length > 0
     
@@ -238,7 +211,6 @@ const Map1 = () => {
                 <View style={styles.attribution} pointerEvents="none">
                     <Animated.Text style={styles.attrText}>© OpenStreetMap contributors</Animated.Text>
                 </View>
-
             </View>
         </ThemedView>
     )
