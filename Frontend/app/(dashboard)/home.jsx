@@ -14,6 +14,7 @@ const Profile1 = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [currentDate, setCurrentDate] = useState('');
     const [truckStatus, setTruckStatus] = useState('active'); // 'active' or 'inactive'
+    const [pickupText, setPickupText] = useState('');
 
     // Update date on mount and every minute
     useEffect(() => {
@@ -32,24 +33,75 @@ const Profile1 = () => {
                 'Thursday', 'Friday', 'Saturday'
             ];
             
-            // Calculate Bikram Sambat year
-            const month = today.getMonth();
+            // Calculate Bikram Sambat year and month more accurately
+            const month = today.getMonth(); // 0-11
             const day = today.getDate();
-            const nepaliYear = (month < 3 || (month === 3 && day < 13)) 
-                ? today.getFullYear() + 56 
-                : today.getFullYear() + 57;
             
-            const nepaliMonth = nepaliMonths[month];
-            const nepaliDay = day;
+            // Nepali year conversion from Gregorian
+            // The conversion date is usually mid-April (around April 13-14)
+            let nepaliYear = today.getFullYear() + 56;
+            if (month >= 3) {
+                nepaliYear = today.getFullYear() + 57;
+            }
+            
+            // More accurate month mapping based on Gregorian to Bikram Sambat conversion
+            // This accounts for the approximate conversion around mid-April
+            let nepaliMonth = month;
+            let nepaliDay = day;
+            
+            // Adjust for the transition around mid-April
+            if (month === 3 && day >= 13) { // April 13 onwards
+                nepaliMonth = 0; // Baisakh
+                nepaliDay = day - 13;
+            } else if (month < 3) { // Jan-Mar
+                nepaliMonth = (month + 8) % 12; // Maps to Poush, Magh, Falgun of previous Nepali year
+                if (month === 0) nepaliDay = day + 16; // Jan -> Poush (approx)
+                else if (month === 1) nepaliDay = day + 17; // Feb -> Magh (approx)
+                else nepaliDay = day + 16; // Mar -> Falgun (approx)
+            } else { // Apr-Dec
+                nepaliMonth = month - 3;
+                nepaliDay = day - 13;
+            }
+            
+            const nepaliMonthName = nepaliMonths[nepaliMonth];
             const nepaliDayName = nepaliDays[today.getDay()];
             
-            setCurrentDate(`${nepaliDayName}, ${nepaliMonth} ${nepaliDay}, ${nepaliYear}`);
+            setCurrentDate(`${nepaliDayName}, ${nepaliMonthName} ${nepaliDay}, ${nepaliYear}`);
             
             // Determine truck status based on day of week
             // 0 = Sunday, 2 = Tuesday, 4 = Thursday
             const activeDays = [0, 2, 4];
             const isActive = activeDays.includes(today.getDay());
             setTruckStatus(isActive ? 'active' : 'inactive');
+            
+            // Calculate pickup day text
+            const dayOfWeek = today.getDay();
+            let pickup = '';
+            
+            if (activeDays.includes(dayOfWeek)) {
+                pickup = 'Pickup Day Today! 🚛';
+            } else {
+                let nextDay = '';
+                let isTomorrow = false;
+                
+                if (dayOfWeek === 1) { // Monday
+                    nextDay = 'Tuesday 🗓️\n';
+                    isTomorrow = '(Tomorrow)';
+                } else if (dayOfWeek === 3) { // Wednesday
+                    nextDay = 'Thursday 🗓️\n';
+                    isTomorrow = '(Tomorrow)';
+                } else if (dayOfWeek === 5) { // Friday
+                    nextDay = 'Sunday 🗓️\n';
+                    isTomorrow = '(Day After Tomorrow)';
+                } else if (dayOfWeek === 6) { // Saturday
+                    nextDay = 'Sunday 🗓️\n';
+                    isTomorrow = '(Tomorrow)';
+                }
+                
+                pickup = `Next Pickup: ${nextDay} ${isTomorrow}`;
+            }
+            
+            setPickupText(pickup);
         };
         
         updateDate();
@@ -114,18 +166,23 @@ const Profile1 = () => {
                     {/* Current Date Container */}
                     <View style={styles.dateContainer}>
                         <ThemedText style={styles.dateText}>{currentDate}</ThemedText>
-                        <TouchableOpacity 
-                            onPress={() => truckStatus === 'active' && router.push('/(dashboard)/map')}
-                            disabled={truckStatus === 'inactive'}
-                            activeOpacity={truckStatus === 'active' ? 0.7 : 1}
-                        >
-                            <View style={[styles.statusPill, truckStatus === 'active' ? styles.pillActive : styles.pillInactive]}>
-                                <Ionicons name="car" size={18} color="white" style={styles.pillIcon}/>
-                                <ThemedText style={styles.statusText}>
-                                    Truck {truckStatus === 'active' ? 'Active' : 'Inactive'}
-                                </ThemedText>
-                            </View>
-                        </TouchableOpacity>
+                        
+                        <View style={styles.pickupStatusRow}>
+                            <ThemedText style={styles.pickupText}>{pickupText}</ThemedText>
+                            
+                            <TouchableOpacity 
+                                onPress={() => truckStatus === 'active' && router.push('/(dashboard)/map')}
+                                disabled={truckStatus === 'inactive'}
+                                activeOpacity={truckStatus === 'active' ? 0.7 : 1}
+                            >
+                                <View style={[styles.statusPill, truckStatus === 'active' ? styles.pillActive : styles.pillInactive]}>
+                                    <Ionicons name="car" size={18} color="white" style={styles.pillIcon}/>
+                                    <ThemedText style={styles.statusText}>
+                                        Truck {truckStatus === 'active' ? 'Active' : 'Inactive'}
+                                    </ThemedText>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                     
                     {/* New Container */}
@@ -236,21 +293,34 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 2,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        flexDirection: 'column',
+        justifyContent: 'center',
         alignItems: 'center',
     },
     dateText: {
         fontSize: 16,
         fontWeight: '600',
         color: '#4CAF50',
+        textAlign: 'center',
+        marginBottom: 12,
+    },
+    pickupStatusRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+        marginTop: 12,
+    },
+    pickupText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#333',
         flex: 1,
     },
     statusPill: {
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 20,
-        marginLeft: 10,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
