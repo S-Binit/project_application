@@ -1,13 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import {useCallback, useEffect, useRef, useState} from 'react'
 import {StyleSheet, View} from 'react-native'
-import MapView, {Marker} from 'react-native-maps'
+import Constants from 'expo-constants'
+import MapView, {Marker, UrlTile} from 'react-native-maps'
 import * as Location from 'expo-location'
 
 import ThemedButton from "../../components/ThemedButton"
 import ThemedText from "../../components/ThemedText"
 import ThemedViewDriver from "../../components/ThemedViewDriver"
 import {LOCATION_URL} from "../../constants/API"
+
+const TILE_URL = Constants?.expoConfig?.extra?.TILE_URL
+const TILE_USER_AGENT = Constants?.expoConfig?.extra?.TILE_USER_AGENT
+
+const mapTileUrl = TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+const mapTileUserAgent = TILE_USER_AGENT || 'project-app/1.0 (contact: you@example.com)'
 
 const DEFAULT_REGION = {
     latitude: 37.78825,
@@ -152,8 +159,16 @@ const Map2 = () => {
                     rotateEnabled={true}
                     pitchEnabled={true}
                     scrollEnabled={true}
-                    provider="google"
+                    // Use OpenStreetMap tiles as base layer
+                    mapType="none"
                 >
+                    {/* OpenStreetMap base tiles */}
+                    <UrlTile
+                        urlTemplate={mapTileUrl}
+                        maximumZ={19}
+                        flipY={false}
+                        userAgent={mapTileUserAgent}
+                    />
                     {hasLocation && (
                         <Marker
                             coordinate={region}
@@ -164,6 +179,10 @@ const Map2 = () => {
                         />
                     )}
                 </MapView>
+                {/* OSM attribution (required) */}
+                <View style={styles.attribution} pointerEvents="none">
+                    <ThemedText style={styles.attrText}>© OpenStreetMap contributors</ThemedText>
+                </View>
                 <View style={styles.actions}>
                     <ThemedButton onPress={toggleSharing}>
                         <ThemedText style={styles.actionText}>
@@ -191,6 +210,19 @@ const styles = StyleSheet.create({
     },
     map: {
         flex: 1,
+    },
+    attribution: {
+        position: 'absolute',
+        right: 8,
+        bottom: 8,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        borderRadius: 6,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+    },
+    attrText: {
+        color: '#fff',
+        fontSize: 11,
     },
     actions: {
         position: 'absolute',

@@ -1,10 +1,17 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {StyleSheet, View, Animated} from 'react-native'
-import MapView, {Marker, AnimatedRegion} from 'react-native-maps'
+import Constants from 'expo-constants'
+import MapView, {Marker, AnimatedRegion, UrlTile} from 'react-native-maps'
 import * as Location from 'expo-location'
 
 import ThemedView from "../../components/ThemedView"
 import {LOCATION_URL} from "../../constants/API"
+
+const TILE_URL = Constants?.expoConfig?.extra?.TILE_URL
+const TILE_USER_AGENT = Constants?.expoConfig?.extra?.TILE_USER_AGENT
+
+const mapTileUrl = TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+const mapTileUserAgent = TILE_USER_AGENT || 'project-app/1.0 (contact: you@example.com)'
 
 const DEFAULT_REGION = {
     latitude: 37.78825,
@@ -196,10 +203,16 @@ const Map1 = () => {
                     rotateEnabled={true}
                     pitchEnabled={true}
                     scrollEnabled={true}
-                    mapType="standard"
-                    // Enable native driver for smooth animations
-                    provider="google"
+                    // Use OpenStreetMap tiles as base layer
+                    mapType="none"
                 >
+                    {/* OpenStreetMap base tiles */}
+                    <UrlTile
+                        urlTemplate={mapTileUrl}
+                        maximumZ={19}
+                        flipY={false}
+                        userAgent={mapTileUserAgent}
+                    />
                     {driverMarkers.map(marker => (
                         <Marker
                             key={marker.key}
@@ -221,6 +234,10 @@ const Map1 = () => {
                         />
                     )}
                 </MapView>
+                {/* OSM attribution (required) */}
+                <View style={styles.attribution} pointerEvents="none">
+                    <Animated.Text style={styles.attrText}>© OpenStreetMap contributors</Animated.Text>
+                </View>
 
             </View>
         </ThemedView>
@@ -239,5 +256,18 @@ const styles = StyleSheet.create({
     },
     map: {
         flex: 1,
+    },
+    attribution: {
+        position: 'absolute',
+        right: 8,
+        bottom: 8,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        borderRadius: 6,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+    },
+    attrText: {
+        color: '#fff',
+        fontSize: 11,
     },
 })
