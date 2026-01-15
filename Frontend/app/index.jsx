@@ -78,7 +78,7 @@ const RootIndex = () => {
                 onPress={goadminlogin}
                 style={({ pressed }) => [
                 styles.button,
-                  { backgroundColor: pressed ? '#FF6B35' : '#FF6B35' },  // Darker when pressed
+                  { backgroundColor: pressed ? '#c55d5d' : '#c55d5d' },  // Darker when pressed
                   { opacity: pressed ? 0.5 : 1 },
                 ]}
               >

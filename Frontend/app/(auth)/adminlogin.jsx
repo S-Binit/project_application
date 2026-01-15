@@ -16,7 +16,7 @@ import ThemedText from '../../components/ThemedText';
 import Spacer from '../../components/Spacer';
 import ThemedButton from '../../components/ThemedButton';
 import ThemedAdminLoginLogo from '../../components/ThemedAdminLoginLogo';
-import ThemedViewDriver from '../../components/ThemedViewDriver';
+import ThemedViewAdmin from '../../components/ThemedViewAdmin';
 
 
 // API base URL is centralized in constants/API.js
@@ -85,7 +85,7 @@ const AdminLogin = () => {
     };
 
   return (
-    <ThemedViewDriver style={styles.container}>
+    <ThemedViewAdmin style={styles.container}>
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{flex: 1 }}>
@@ -107,12 +107,12 @@ const AdminLogin = () => {
             <Spacer height={80}/>
                
                 {/* {login Logo} */}
-            <ThemedViewDriver style={styles.HeadLogo}>
+            <ThemedViewAdmin style={styles.HeadLogo}>
                 <View style={styles.imgcontainer}>
                     <ThemedAdminLoginLogo style={styles.image} />
                 </View>
                 <ThemedText style={styles.title} title={true}>Log In as Admin</ThemedText>
-            </ThemedViewDriver>
+            </ThemedViewAdmin>
 
             <Spacer height={40}/>
 
@@ -200,7 +200,7 @@ const AdminLogin = () => {
             <Spacer height={100}/>
             </ScrollView>
         </KeyboardAvoidingView>
-    </ThemedViewDriver>
+    </ThemedViewAdmin>
   );
 };
 
@@ -298,14 +298,14 @@ const styles = StyleSheet.create({
         fontSize: 15,
     },
     forgotText: {
-        color: '#4DA4EA',
+        color: '#c55d5d',
         fontSize: 15,
     },
     signInButton: {
         width: '100%',
         height: 56,
         borderRadius: 28,
-        backgroundColor: '#4DA4EA', 
+        backgroundColor: '#c55d5d', 
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
