@@ -54,7 +54,7 @@ const CreateDriver = () => {
 
       if (data.success) {
         Alert.alert('Success', 'Driver created successfully', [
-          { text: 'OK', onPress: () => router.back() }
+          { text: 'OK', onPress: () => router.push('/(admin)/drivermanagement') }
         ])
       } else {
         Alert.alert('Error', data.message || 'Failed to create driver')
@@ -73,7 +73,7 @@ const CreateDriver = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.push('/(admin)/drivermanagement')}>
           <Ionicons name="arrow-back" size={28} color="#000" />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Create Driver</ThemedText>

@@ -55,6 +55,41 @@ const DashboardLayout = () => {
                               color={focused ? theme.iconColorFocused : theme.iconColor} />
                       )
                   }} />
+              <Tabs.Screen
+                  name="admindash"
+                  options={{
+                      href: null
+                  }} />
+              <Tabs.Screen
+                  name="adminmap"
+                  options={{
+                      href: null
+                  }} />
+              <Tabs.Screen
+                  name="adminnews"
+                  options={{
+                      href: null
+                  }} />
+              <Tabs.Screen
+                  name="createdriver"
+                  options={{
+                      href: null
+                  }} />
+              <Tabs.Screen
+                  name="deletedriver"
+                  options={{
+                      href: null
+                  }} />
+              <Tabs.Screen
+                  name="driverinfo"
+                  options={{
+                      href: null
+                  }} />
+              <Tabs.Screen
+                  name="drivermanagement"
+                  options={{
+                      href: null
+                  }} />
           </Tabs>     
   )
 }

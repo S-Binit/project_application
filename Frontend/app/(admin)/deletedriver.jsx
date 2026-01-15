@@ -127,7 +127,7 @@ const DeleteDriver = () => {
     return (
       <ThemedView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.push('/(admin)/drivermanagement')}>
             <Ionicons name="arrow-back" size={28} color="#000" />
           </TouchableOpacity>
           <ThemedText style={styles.headerTitle}>Delete Driver</ThemedText>
