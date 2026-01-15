@@ -126,16 +126,6 @@ const Profile2 = () => {
 
             <Spacer height={16} />
 
-            <ThemedText style={styles.sectionTitle}>More</ThemedText>
-            <Spacer height={12} />
-
-            <View style={styles.actionsRow}>
-                <Pressable style={({pressed}) => [styles.actionButton, styles.actionButtonDanger, pressed && {backgroundColor: 'rgba(197, 22, 16, 0.15)'}]} onPress={() => setDeleteModalVisible(true)}>
-                    <Ionicons name="trash-outline" size={20} color="#c51610" style={styles.actionIcon} />
-                    <ThemedText style={[styles.actionText, styles.actionTextDanger]}>Delete Account</ThemedText>
-                </Pressable>
-            </View>
-
             {/* Add profile content below */}
             </ScrollView>
 

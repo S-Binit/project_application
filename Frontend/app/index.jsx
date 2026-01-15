@@ -28,6 +28,11 @@ const RootIndex = () => {
         router.push('/driverlogin')
       }
 
+      const goadminlogin = () => {
+        //Navigate to admin login page
+        router.push('/adminlogin')
+      }
+
   return (
     <><ThemedView style={styles.WelcomeText}>
 
@@ -52,21 +57,38 @@ const RootIndex = () => {
 
           <Spacer height={25}/>  
 
-            {/* {driver login button} */}
-            <Pressable
-              onPress={godriverlogin}
-              style={({ pressed }) => [
-              styles.button,
-                { backgroundColor: pressed ? '#4DA4EA' : '#4DA4EA' },  // Darker when pressed
-                { opacity: pressed ? 0.5 : 1 },
-              ]}
-            >
-              {({ pressed }) => (
-                <Text style={styles.text}>
-                  {pressed ? 'DRIVER LOGIN' : 'DRIVER LOGIN'}
-                </Text>
-              )}
-            </Pressable>
+            {/* {driver and admin login buttons} */}
+            <View style={styles.buttonRow}>
+              <Pressable
+                onPress={godriverlogin}
+                style={({ pressed }) => [
+                styles.button,
+                  { backgroundColor: pressed ? '#4DA4EA' : '#4DA4EA' },  // Darker when pressed
+                  { opacity: pressed ? 0.5 : 1 },
+                ]}
+              >
+                {({ pressed }) => (
+                  <Text style={styles.text}>
+                    {pressed ? 'DRIVER LOGIN' : 'DRIVER LOGIN'}
+                  </Text>
+                )}
+              </Pressable>
+
+              <Pressable
+                onPress={goadminlogin}
+                style={({ pressed }) => [
+                styles.button,
+                  { backgroundColor: pressed ? '#FF6B35' : '#FF6B35' },  // Darker when pressed
+                  { opacity: pressed ? 0.5 : 1 },
+                ]}
+              >
+                {({ pressed }) => (
+                  <Text style={styles.text}>
+                    {pressed ? 'ADMIN LOGIN' : 'ADMIN LOGIN'}
+                  </Text>
+                )}
+              </Pressable>
+            </View>
         
           </ThemedView></>
         
@@ -110,9 +132,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   button: {
-    width: 275,
+    width: 150,
     height: 56,
-    padding: 15,
+    padding: 10,
     borderRadius: 28,
     alignItems: 'center',
     shadowColor: '#000',
@@ -121,11 +143,16 @@ const styles = StyleSheet.create({
     elevation: 5,
     justifyContent: 'center',
     alignContent: 'center',
-    
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   text: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: 'bold',
   },
 })
