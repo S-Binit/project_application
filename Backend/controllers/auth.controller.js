@@ -1,5 +1,6 @@
 const User = require('../models/user')
 const Driver = require('../models/driver')
+const Admin = require('../models/admin')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
@@ -114,6 +115,37 @@ exports.driverLogin = async (req, res) => {
     })
   } catch (error) {
     console.error('Driver login error:', error.message)
+    res.status(500).json({ message: 'Login failed' })
+  }
+}
+
+exports.adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body
+
+    if (!email?.trim() || !password) {
+      return res.status(400).json({ message: 'Email and password are required' })
+    }
+
+    const admin = await Admin.findOne({ email: email.toLowerCase() })
+    if (!admin || !(await bcrypt.compare(password, admin.password))) {
+      return res.status(400).json({ message: 'Invalid credentials' })
+    }
+
+    const token = generateToken(admin._id, 'admin')
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        role: 'admin',
+      },
+    })
+  } catch (error) {
+    console.error('Admin login error:', error.message)
     res.status(500).json({ message: 'Login failed' })
   }
 }
