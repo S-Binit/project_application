@@ -5,9 +5,9 @@ import { useCallback, useState, useEffect } from 'react';
 
 import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
-import ThemedView from "../../components/ThemedView"
 import ThemedIonicons from '../../components/ThemedIonIcons';
-import ThemedDashLogo from '../../components/ThemedDashLogo';
+import ThemedAdminDashLogo from '../../components/ThemedAdminDashLogo';
+import ThemedViewAdmin from '../../components/ThemedViewAdmin';
 
 const Profile1 = () => {
     const router = useRouter();
@@ -122,9 +122,9 @@ const Profile1 = () => {
     return (
         <View style={styles.container}>
             {/* Fixed Header */}
-            <ThemedView style={styles.header} safe={true}>
+            <ThemedViewAdmin style={styles.header} safe={true}>
                 <View style={styles.logoContainer}>
-                    <ThemedDashLogo style={styles.logo} />
+                    <ThemedAdminDashLogo style={styles.logo} />
                 </View>
 
                 <View style={styles.headerActions}>
@@ -143,10 +143,10 @@ const Profile1 = () => {
                     </TouchableOpacity>
                 </View>
 
-            </ThemedView>
+            </ThemedViewAdmin>
 
             {/* Scrollable Content */}
-            <ThemedView style={styles.body}>
+            <ThemedViewAdmin style={styles.body}>
                 <ScrollView 
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
@@ -201,7 +201,7 @@ const Profile1 = () => {
                         </View>
                         <TouchableOpacity 
                             style={styles.reportButton}
-                            onPress={() => router.push('/(admin)/complaints')}>
+                            onPress={() => router.push('/(innerdashboard)/complaints')}>
                             <ThemedText style={styles.reportButtonText}>See complaints and feedback →</ThemedText>
                         </TouchableOpacity>
                     </View>
@@ -218,7 +218,7 @@ const Profile1 = () => {
                     {/* Add more content here to test scrolling */}
                 
                 </ScrollView>
-            </ThemedView>
+            </ThemedViewAdmin>
         </View>
     )
 }
@@ -278,12 +278,12 @@ const styles = StyleSheet.create({
     },
     scrollView: {
         flex: 1,
-        backgroundColor: '#E8F5F2',
+        backgroundColor: '#ffebee',
     },
     scrollContent: {
         padding: 20,
         paddingBottom: 40,
-        backgroundColor: '#E8F5F2',
+        backgroundColor: '#ffebee',
     },
     heading:{
         fontWeight: "bold",
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
         padding: 16,
         marginBottom: 20,
         borderLeftWidth: 4,
-        borderLeftColor: '#4CAF50',
+        borderLeftColor: '#c55d5d',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     dateText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#4CAF50',
+        color: '#c55d5d',
         textAlign: 'center',
         marginBottom: 12,
     },
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
         marginHorizontal: -32,
     },
     reportButton: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#c55d5d',
         paddingVertical: 16,
         alignItems: 'center',
         width: '100%',
