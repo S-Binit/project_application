@@ -90,6 +90,10 @@ const Profile1 = () => {
             <Spacer height={12} />
 
             <View style={styles.actionsRow}>
+                <Pressable style={({pressed}) => [styles.actionButton, pressed && {opacity: 0.6}]} onPress={() => router.push('/(innerdashboard)/myfeedback')}>
+                    <Ionicons name="chatbubbles-outline" size={20} color="#2c3330" style={styles.actionIcon} />
+                    <ThemedText style={styles.actionText}>My Feedback</ThemedText>
+                </Pressable>
                 <Pressable style={({pressed}) => [styles.actionButton, pressed && {opacity: 0.6}]} onPress={() => {}}>
                     <Ionicons name="key-outline" size={20} color="#2c3330" style={styles.actionIcon} />
                     <ThemedText style={styles.actionText}>Change Password</ThemedText>

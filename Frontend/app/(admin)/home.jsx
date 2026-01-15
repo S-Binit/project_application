@@ -199,8 +199,10 @@ const Profile1 = () => {
                                 <ThemedText style={styles.feedbacksText}>Feedbacks</ThemedText>
                             </View>
                         </View>
-                        <TouchableOpacity style={styles.reportButton}>
-                            <ThemedText style={styles.reportButtonText}>Report Here →</ThemedText>
+                        <TouchableOpacity 
+                            style={styles.reportButton}
+                            onPress={() => router.push('/(admin)/complaints')}>
+                            <ThemedText style={styles.reportButtonText}>See complaints and feedback →</ThemedText>
                         </TouchableOpacity>
                     </View>
                     

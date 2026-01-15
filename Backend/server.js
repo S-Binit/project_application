@@ -16,6 +16,7 @@ app.use(express.json())
 app.use('/api/auth', require('./routes/auth.routes'))
 app.use('/api/location', require('./routes/location.routes'))
 app.use('/api/route', require('./routes/route.routes'))
+app.use('/api/feedback', require('./routes/feedback.routes'))
 
 // Health check
 app.get('/health', (_req, res) => res.json({ ok: true }))

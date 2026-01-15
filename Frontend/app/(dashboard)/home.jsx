@@ -1,13 +1,15 @@
-import {StyleSheet, TouchableOpacity, View, ScrollView, Platform, StatusBar, RefreshControl, Image} from 'react-native'
+import {StyleSheet, TouchableOpacity, View, ScrollView, Platform, StatusBar, RefreshControl, Image, Modal, TextInput, Alert} from 'react-native'
 import { Ionicons} from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
 import ThemedView from "../../components/ThemedView"
 import ThemedIonicons from '../../components/ThemedIonIcons';
 import ThemedDashLogo from '../../components/ThemedDashLogo';
+import { API_BASE } from '../../constants/API';
 
 const Profile1 = () => {
     const router = useRouter();
@@ -15,6 +17,12 @@ const Profile1 = () => {
     const [currentDate, setCurrentDate] = useState('');
     const [truckStatus, setTruckStatus] = useState('active'); // 'active' or 'inactive'
     const [pickupText, setPickupText] = useState('');
+    const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
+    const [feedbackType, setFeedbackType] = useState('complaint');
+    const [feedbackSubject, setFeedbackSubject] = useState('');
+    const [feedbackMessage, setFeedbackMessage] = useState('');
+    const [feedbackRating, setFeedbackRating] = useState(5);
+    const [submitting, setSubmitting] = useState(false);
 
     // Update date on mount and every minute
     useEffect(() => {
@@ -119,6 +127,48 @@ const Profile1 = () => {
         setTimeout(() => setRefreshing(false), 800);
     }, []);
 
+    const handleSubmitFeedback = async () => {
+        if (!feedbackSubject.trim() || !feedbackMessage.trim()) {
+            Alert.alert('Validation Error', 'Please fill in subject and message');
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            const token = await AsyncStorage.getItem('token');
+            const response = await fetch(`${API_BASE}/feedback/submit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    type: feedbackType,
+                    subject: feedbackSubject,
+                    message: feedbackMessage,
+                    rating: feedbackType === 'feedback' ? feedbackRating : null,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                Alert.alert('Success', 'Your feedback has been submitted!');
+                setFeedbackModalVisible(false);
+                setFeedbackSubject('');
+                setFeedbackMessage('');
+                setFeedbackRating(5);
+            } else {
+                Alert.alert('Error', data.message || 'Failed to submit feedback');
+            }
+        } catch (error) {
+            console.error('Feedback submission error:', error);
+            Alert.alert('Error', 'Cannot connect to server');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     return (
         <View style={styles.container}>
             {/* Fixed Header */}
@@ -199,7 +249,9 @@ const Profile1 = () => {
                                 <ThemedText style={styles.feedbacksText}>Feedbacks</ThemedText>
                             </View>
                         </View>
-                        <TouchableOpacity style={styles.reportButton}>
+                        <TouchableOpacity 
+                            style={styles.reportButton}
+                            onPress={() => setFeedbackModalVisible(true)}>
                             <ThemedText style={styles.reportButtonText}>Report Here →</ThemedText>
                         </TouchableOpacity>
                     </View>
@@ -208,6 +260,99 @@ const Profile1 = () => {
                 
                 </ScrollView>
             </ThemedView>
+
+            {/* Feedback Modal */}
+            <Modal
+                visible={feedbackModalVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setFeedbackModalVisible(false)}>
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <ThemedText style={styles.modalTitle}>Submit Feedback</ThemedText>
+                            <TouchableOpacity 
+                                onPress={() => setFeedbackModalVisible(false)}
+                                hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                                <Ionicons name="close" size={28} color="#666" />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Type Selection */}
+                        <View style={styles.typeSelectionContainer}>
+                            <TouchableOpacity
+                                style={[styles.typeButton, feedbackType === 'complaint' && styles.typeButtonActive]}
+                                onPress={() => setFeedbackType('complaint')}>
+                                <ThemedText style={[styles.typeButtonText, feedbackType === 'complaint' && styles.typeButtonTextActive]}>
+                                    Complaint
+                                </ThemedText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.typeButton, feedbackType === 'feedback' && styles.typeButtonActive]}
+                                onPress={() => setFeedbackType('feedback')}>
+                                <ThemedText style={[styles.typeButtonText, feedbackType === 'feedback' && styles.typeButtonTextActive]}>
+                                    Feedback
+                                </ThemedText>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Subject Input */}
+                        <ThemedText style={styles.inputLabel}>Subject</ThemedText>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter subject"
+                            placeholderTextColor="#999"
+                            value={feedbackSubject}
+                            onChangeText={setFeedbackSubject}
+                            maxLength={100}
+                        />
+
+                        {/* Message Input */}
+                        <ThemedText style={styles.inputLabel}>Message</ThemedText>
+                        <TextInput
+                            style={[styles.input, styles.messageInput]}
+                            placeholder="Enter your message"
+                            placeholderTextColor="#999"
+                            value={feedbackMessage}
+                            onChangeText={setFeedbackMessage}
+                            multiline={true}
+                            numberOfLines={5}
+                            maxLength={500}
+                        />
+
+                        {/* Rating (only for feedback) */}
+                        {feedbackType === 'feedback' && (
+                            <View>
+                                <ThemedText style={styles.inputLabel}>Rating</ThemedText>
+                                <View style={styles.ratingContainer}>
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <TouchableOpacity
+                                            key={star}
+                                            onPress={() => setFeedbackRating(star)}
+                                            style={styles.starButton}>
+                                            <Ionicons
+                                                name={star <= feedbackRating ? "star" : "star-outline"}
+                                                size={32}
+                                                color={star <= feedbackRating ? "#FFD700" : "#ccc"}
+                                            />
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Submit Button */}
+                        <TouchableOpacity
+                            style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+                            onPress={handleSubmitFeedback}
+                            disabled={submitting}>
+                            <ThemedText style={styles.submitButtonText}>
+                                {submitting ? 'Submitting...' : 'Submit'}
+                            </ThemedText>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     )
 }
@@ -409,5 +554,100 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 16,
         fontWeight: '600',
+    },
+    // Modal Styles
+    modalContainer: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 20,
+        paddingBottom: 40,
+        maxHeight: '90%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#000',
+    },
+    typeSelectionContainer: {
+        flexDirection: 'row',
+        gap: 10,
+        marginBottom: 20,
+    },
+    typeButton: {
+        flex: 1,
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        borderRadius: 8,
+        borderWidth: 2,
+        borderColor: '#ddd',
+        alignItems: 'center',
+    },
+    typeButtonActive: {
+        backgroundColor: '#4CAF50',
+        borderColor: '#4CAF50',
+    },
+    typeButtonText: {
+        color: '#666',
+        fontWeight: '600',
+    },
+    typeButtonTextActive: {
+        color: '#fff',
+    },
+    inputLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginTop: 15,
+        marginBottom: 8,
+        color: '#333',
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 14,
+        backgroundColor: '#f9f9f9',
+    },
+    messageInput: {
+        textAlignVertical: 'top',
+        paddingVertical: 12,
+        minHeight: 100,
+    },
+    ratingContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginVertical: 10,
+    },
+    starButton: {
+        padding: 5,
+    },
+    submitButton: {
+        backgroundColor: '#4CAF50',
+        paddingVertical: 14,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    submitButtonDisabled: {
+        opacity: 0.6,
+    },
+    submitButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 })
