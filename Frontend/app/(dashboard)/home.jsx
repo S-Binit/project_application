@@ -255,6 +255,14 @@ const Profile1 = () => {
                             <ThemedText style={styles.reportButtonText}>Report Here →</ThemedText>
                         </TouchableOpacity>
                     </View>
+
+                    {/* Square Button Below Report Container */}
+                    <TouchableOpacity 
+                        style={styles.squareButton}
+                        onPress={() => router.push('/(innerdashboard)/myfeedback')}>
+                        <ThemedIonicons name="document-text" size={32} style={styles.squareButtonIcon} />
+                        <ThemedText style={styles.squareButtonText}>My Reports</ThemedText>
+                    </TouchableOpacity>
                     
                     {/* Add more content here to test scrolling */}
                 
@@ -295,6 +303,7 @@ const Profile1 = () => {
                                 </ThemedText>
                             </TouchableOpacity>
                         </View>
+                        
 
                         {/* Subject Input */}
                         <ThemedText style={styles.inputLabel}>Subject</ThemedText>
@@ -554,6 +563,33 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 16,
         fontWeight: '600',
+    },
+    squareButton: {
+        width: 100,
+        height: 100,
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+        flexDirection: 'column',
+        gap: 8,
+        borderWidth: 2,
+        borderColor: '#4CAF50',
+    },
+    squareButtonIcon: {
+        color: '#4CAF50',
+    },
+    squareButtonText: {
+        color: '#4CAF50',
+        fontSize: 12,
+        fontWeight: '600',
+        textAlign: 'center',
     },
     // Modal Styles
     modalContainer: {
