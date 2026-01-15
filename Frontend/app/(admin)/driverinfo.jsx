@@ -1,0 +1,423 @@
+import React, { useState, useEffect } from 'react'
+import { StyleSheet, View, TouchableOpacity, StatusBar, Platform, FlatList, Alert, RefreshControl, ActivityIndicator, Modal, ScrollView } from 'react-native'
+import { useRouter, useLocalSearchParams } from 'expo-router'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Ionicons } from '@expo/vector-icons'
+
+import ThemedText from '../../components/ThemedText'
+import ThemedView from '../../components/ThemedView'
+import Spacer from '../../components/Spacer'
+import { API_BASE } from '../../constants/API'
+
+const DriverInfo = () => {
+  const router = useRouter()
+  const { driverId } = useLocalSearchParams()
+  const [drivers, setDrivers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [selectedDriver, setSelectedDriver] = useState(null)
+  const [modalVisible, setModalVisible] = useState(false)
+
+  const fetchDrivers = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token')
+      const response = await fetch(`${API_BASE}/driver/all`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setDrivers(data.drivers || [])
+      } else {
+        Alert.alert('Error', data.message || 'Failed to fetch drivers')
+      }
+    } catch (error) {
+      console.error('Fetch drivers error:', error)
+      Alert.alert('Error', 'Cannot connect to server')
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchDrivers()
+  }, [])
+
+  useEffect(() => {
+    if (driverId && drivers.length > 0) {
+      const driver = drivers.find(d => d._id === driverId)
+      if (driver) {
+        handleDriverClick(driver)
+      }
+    }
+  }, [driverId, drivers])
+
+  const onRefresh = () => {
+    setRefreshing(true)
+    fetchDrivers()
+  }
+
+  const handleDriverClick = (driver) => {
+    setSelectedDriver(driver)
+    setModalVisible(true)
+  }
+
+  const closeModal = () => {
+    setModalVisible(false)
+    setSelectedDriver(null)
+  }
+
+  const renderDriverItem = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.driverCard}
+      onPress={() => handleDriverClick(item)}>
+      <View style={styles.driverInfo}>
+        <View style={styles.avatarContainer}>
+          <Ionicons name="person" size={32} color="#fff" />
+        </View>
+        <View style={styles.driverDetails}>
+          <ThemedText style={styles.driverName}>{item.name}</ThemedText>
+          <ThemedText style={styles.driverEmail}>{item.email}</ThemedText>
+          <ThemedText style={styles.driverPhone}>{item.phoneNumber}</ThemedText>
+        </View>
+      </View>
+      <Ionicons name="chevron-forward" size={24} color="#999" />
+    </TouchableOpacity>
+  )
+
+  if (loading) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={28} color="#000" />
+          </TouchableOpacity>
+          <ThemedText style={styles.headerTitle}>Driver Info</ThemedText>
+          <View style={{ width: 28 }} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2196F3" />
+          <ThemedText style={styles.loadingText}>Loading drivers...</ThemedText>
+        </View>
+      </ThemedView>
+    )
+  }
+
+  return (
+    <ThemedView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={28} color="#000" />
+        </TouchableOpacity>
+        <ThemedText style={styles.headerTitle}>Driver Info</ThemedText>
+        <View style={{ width: 28 }} />
+      </View>
+
+      {/* List */}
+      {drivers.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="people-outline" size={64} color="#ccc" />
+          <ThemedText style={styles.emptyText}>No drivers found</ThemedText>
+        </View>
+      ) : (
+        <FlatList
+          data={drivers}
+          renderItem={renderDriverItem}
+          keyExtractor={item => item._id}
+          contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        />
+      )}
+
+      {/* Details Modal */}
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={closeModal}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Driver Details</ThemedText>
+              <TouchableOpacity onPress={closeModal}>
+                <Ionicons name="close" size={28} color="#000" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              {selectedDriver && (
+                <>
+                  {/* Avatar */}
+                  <View style={styles.modalAvatarContainer}>
+                    <View style={styles.modalAvatar}>
+                      <Ionicons name="person" size={48} color="#fff" />
+                    </View>
+                  </View>
+
+                  <Spacer height={20} />
+
+                  {/* Personal Information */}
+                  <View style={styles.section}>
+                    <ThemedText style={styles.sectionTitle}>Personal Information</ThemedText>
+                    
+                    <View style={styles.detailRow}>
+                      <Ionicons name="person-outline" size={20} color="#666" />
+                      <View style={styles.detailTextContainer}>
+                        <ThemedText style={styles.detailLabel}>Name</ThemedText>
+                        <ThemedText style={styles.detailValue}>{selectedDriver.name}</ThemedText>
+                      </View>
+                    </View>
+
+                    <View style={styles.detailRow}>
+                      <Ionicons name="mail-outline" size={20} color="#666" />
+                      <View style={styles.detailTextContainer}>
+                        <ThemedText style={styles.detailLabel}>Email</ThemedText>
+                        <ThemedText style={styles.detailValue}>{selectedDriver.email}</ThemedText>
+                      </View>
+                    </View>
+
+                    <View style={styles.detailRow}>
+                      <Ionicons name="call-outline" size={20} color="#666" />
+                      <View style={styles.detailTextContainer}>
+                        <ThemedText style={styles.detailLabel}>Phone Number</ThemedText>
+                        <ThemedText style={styles.detailValue}>{selectedDriver.phoneNumber}</ThemedText>
+                      </View>
+                    </View>
+                  </View>
+
+                  <Spacer height={20} />
+
+                  {/* License Information */}
+                  <View style={styles.section}>
+                    <ThemedText style={styles.sectionTitle}>License Information</ThemedText>
+                    
+                    <View style={styles.detailRow}>
+                      <Ionicons name="card-outline" size={20} color="#666" />
+                      <View style={styles.detailTextContainer}>
+                        <ThemedText style={styles.detailLabel}>License Number</ThemedText>
+                        <ThemedText style={styles.detailValue}>{selectedDriver.licenseNumber}</ThemedText>
+                      </View>
+                    </View>
+
+                    <View style={styles.detailRow}>
+                      <Ionicons name="calendar-outline" size={20} color="#666" />
+                      <View style={styles.detailTextContainer}>
+                        <ThemedText style={styles.detailLabel}>License Expiry</ThemedText>
+                        <ThemedText style={styles.detailValue}>
+                          {new Date(selectedDriver.licenseExpiry).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </ThemedText>
+                      </View>
+                    </View>
+                  </View>
+
+                  <Spacer height={20} />
+
+                  {/* Vehicle Information */}
+                  <View style={styles.section}>
+                    <ThemedText style={styles.sectionTitle}>Vehicle Information</ThemedText>
+                    
+                    <View style={styles.detailRow}>
+                      <Ionicons name="car-outline" size={20} color="#666" />
+                      <View style={styles.detailTextContainer}>
+                        <ThemedText style={styles.detailLabel}>Vehicle Model</ThemedText>
+                        <ThemedText style={styles.detailValue}>{selectedDriver.vehicleModel}</ThemedText>
+                      </View>
+                    </View>
+
+                    <View style={styles.detailRow}>
+                      <Ionicons name="key-outline" size={20} color="#666" />
+                      <View style={styles.detailTextContainer}>
+                        <ThemedText style={styles.detailLabel}>Vehicle Number</ThemedText>
+                        <ThemedText style={styles.detailValue}>{selectedDriver.vehicleNumber}</ThemedText>
+                      </View>
+                    </View>
+                  </View>
+
+                  <Spacer height={20} />
+                </>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </ThemedView>
+  )
+}
+
+export default DriverInfo
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fafafa',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 10 : 10,
+    backgroundColor: '#fff',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#ddd',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  listContent: {
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+  },
+  driverCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  driverInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatarContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#2196F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  driverDetails: {
+    flex: 1,
+  },
+  driverName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  driverEmail: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 2,
+  },
+  driverPhone: {
+    fontSize: 13,
+    color: '#666',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '90%',
+    paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  modalBody: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  modalAvatarContainer: {
+    alignItems: 'center',
+  },
+  modalAvatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#2196F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  section: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 12,
+    padding: 15,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 15,
+  },
+  detailTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  detailLabel: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 2,
+  },
+  detailValue: {
+    fontSize: 15,
+    color: '#333',
+    fontWeight: '500',
+  },
+})

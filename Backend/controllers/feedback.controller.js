@@ -101,3 +101,32 @@ exports.updateFeedbackStatus = async (req, res) => {
     res.status(500).json({ message: 'Failed to update feedback' })
   }
 }
+
+exports.deleteFeedback = async (req, res) => {
+  try {
+    const { feedbackId } = req.params
+    const userId = req.user.id
+    const userRole = req.user.role
+
+    const feedback = await Feedback.findById(feedbackId)
+
+    if (!feedback) {
+      return res.status(404).json({ message: 'Feedback not found' })
+    }
+
+    // Users can only delete their own feedback, admins can delete any
+    if (userRole !== 'admin' && feedback.userId.toString() !== userId) {
+      return res.status(403).json({ message: 'Not authorized to delete this feedback' })
+    }
+
+    await Feedback.findByIdAndDelete(feedbackId)
+
+    res.json({
+      success: true,
+      message: 'Feedback deleted successfully',
+    })
+  } catch (error) {
+    console.error('Delete feedback error:', error.message)
+    res.status(500).json({ message: 'Failed to delete feedback' })
+  }
+}

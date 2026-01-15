@@ -70,6 +70,43 @@ const MyFeedback = () => {
     }
   }
 
+  const handleDeleteFeedback = (feedbackId, subject) => {
+    Alert.alert(
+      'Delete Feedback',
+      `Are you sure you want to delete "${subject}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem('token')
+              const response = await fetch(`${API_BASE}/feedback/${feedbackId}`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+              })
+
+              const data = await response.json()
+
+              if (data.success) {
+                Alert.alert('Success', 'Feedback deleted')
+                fetchMyFeedback()
+              } else {
+                Alert.alert('Error', data.message || 'Failed to delete')
+              }
+            } catch (error) {
+              console.error('Delete error:', error)
+              Alert.alert('Error', 'Cannot connect to server')
+            }
+          },
+        },
+      ]
+    )
+  }
+
   const renderFeedbackItem = ({ item }) => (
     <View style={styles.feedbackCard}>
       <View style={styles.cardHeader}>
@@ -85,6 +122,12 @@ const MyFeedback = () => {
             </ThemedText>
           </View>
         </View>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDeleteFeedback(item._id, item.subject)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Ionicons name="trash-outline" size={20} color="#ff4444" />
+        </TouchableOpacity>
       </View>
 
       <ThemedText style={styles.subject}>{item.subject}</ThemedText>
@@ -265,11 +308,18 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   titleRow: {
     flexDirection: 'row',
     gap: 8,
     marginBottom: 10,
+    flex: 1,
+  },
+  deleteButton: {
+    padding: 4,
   },
   typeBadge: {
     paddingHorizontal: 8,

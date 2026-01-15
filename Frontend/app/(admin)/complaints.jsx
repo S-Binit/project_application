@@ -115,6 +115,43 @@ const AdminComplaints = () => {
     setModalVisible(true)
   }
 
+  const handleDeleteFeedback = (feedbackId, subject) => {
+    Alert.alert(
+      'Delete Feedback',
+      `Are you sure you want to delete "${subject}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem('token')
+              const response = await fetch(`${API_BASE}/feedback/${feedbackId}`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+              })
+
+              const data = await response.json()
+
+              if (data.success) {
+                Alert.alert('Success', 'Feedback deleted')
+                fetchFeedbacks()
+              } else {
+                Alert.alert('Error', data.message || 'Failed to delete')
+              }
+            } catch (error) {
+              console.error('Delete error:', error)
+              Alert.alert('Error', 'Cannot connect to server')
+            }
+          },
+        },
+      ]
+    )
+  }
+
   const filteredData = getFilteredFeedbacks()
 
   const renderFeedbackItem = ({ item }) => (
@@ -134,8 +171,17 @@ const AdminComplaints = () => {
             </ThemedText>
           </View>
         </View>
-        <ThemedText style={styles.userName}>{item.userName}</ThemedText>
+        <TouchableOpacity
+          style={styles.deleteIconButton}
+          onPress={(e) => {
+            e.stopPropagation()
+            handleDeleteFeedback(item._id, item.subject)
+          }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Ionicons name="trash-outline" size={20} color="#ff4444" />
+        </TouchableOpacity>
       </View>
+      <ThemedText style={styles.userName}>{item.userName}</ThemedText>
 
       <ThemedText style={styles.subject}>{item.subject}</ThemedText>
       <ThemedText style={styles.message} numberOfLines={2}>{item.message}</ThemedText>
@@ -408,11 +454,18 @@ const styles = StyleSheet.create({
   },
   feedbackHeader: {
     marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   feedbackTitleRow: {
     flexDirection: 'row',
     gap: 8,
     marginBottom: 8,
+    flex: 1,
+  },
+  deleteIconButton: {
+    padding: 4,
   },
   typeBadge: {
     paddingHorizontal: 8,

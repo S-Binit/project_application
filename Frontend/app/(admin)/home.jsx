@@ -171,7 +171,7 @@ const Profile1 = () => {
                             <ThemedText style={styles.pickupText}>{pickupText}</ThemedText>
                             
                             <TouchableOpacity 
-                                onPress={() => truckStatus === 'active' && router.push('/(dashboard)/map')}
+                                onPress={() => truckStatus === 'active' && router.push('/(admin)/adminmap')}
                                 disabled={truckStatus === 'inactive'}
                                 activeOpacity={truckStatus === 'active' ? 0.7 : 1}
                             >
@@ -205,6 +205,15 @@ const Profile1 = () => {
                             <ThemedText style={styles.reportButtonText}>See complaints and feedback →</ThemedText>
                         </TouchableOpacity>
                     </View>
+
+                    <Spacer height={20}/>
+
+                    {/* Driver Management Button */}
+                    <TouchableOpacity 
+                        style={styles.driverManagementButton}
+                        onPress={() => router.push('/(admin)/drivermanagement')}>
+                        <ThemedText style={styles.driverManagementText}>Driver Management</ThemedText>
+                    </TouchableOpacity>
                     
                     {/* Add more content here to test scrolling */}
                 
@@ -372,24 +381,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
     },
-    complaintsText: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#EF5350',
-        textAlign: 'right',
-    },
-    feedbacksText: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#1976D2',
-        textAlign: 'right',
-    },
-    headerText: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#333',
-        textAlign: 'right',
-    },
     middleText: {
         fontSize: 18,
         fontWeight: '700',
@@ -411,5 +402,36 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 16,
         fontWeight: '600',
+    },
+    // Driver Management Button
+    driverManagementButton: {
+        backgroundColor: '#FF9800',
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    driverManagementText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    complaintsText: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#EF5350',
+        textAlign: 'right',
+    },
+    feedbacksText: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1976D2',
+        textAlign: 'right',
     },
 })
