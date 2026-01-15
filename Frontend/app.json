@@ -27,7 +27,7 @@
                              "favicon":  "./assets/favicon.png"
                          },
                  "extra":  {
-                              "API_URL": "http://192.168.18.16:5000/api/auth",
+                              "API_URL": "http://192.168.1.6:5000/api/auth",
                               "TILE_URL": "https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=LTlF1qEJ4BNY0Agiwj1v",
                               "TILE_USER_AGENT": "project-app/1.0 (contact: you@example.com)"
                          },

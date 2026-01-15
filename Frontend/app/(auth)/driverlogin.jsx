@@ -71,7 +71,7 @@ const DriverLogin = () => {
                 
                 // Navigate to driver dashboard
                 router.dismissAll();
-                router.replace('/(driverdashboard)/home');
+                router.replace('/(driverdashboard)/map');
             } else {
                 // Server returned error
                 setError(data.message || 'Login failed');

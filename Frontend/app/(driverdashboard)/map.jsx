@@ -4,6 +4,8 @@ import {StyleSheet, View, TextInput, ScrollView, TouchableOpacity, Modal, FlatLi
 import Constants from 'expo-constants'
 import MapView, {Marker, UrlTile, Polyline} from 'react-native-maps'
 import * as Location from 'expo-location'
+import {useRouter} from 'expo-router'
+import {Ionicons} from '@expo/vector-icons'
 
 import ThemedButton from "../../components/ThemedButton"
 import ThemedText from "../../components/ThemedText"
@@ -28,6 +30,7 @@ const LOCATION_UPDATE_INTERVAL = 1000 // 1 second
 const LOCATION_DISTANCE_INTERVAL = 5 // 5 meters
 
 const Map2 = () => {
+    const router = useRouter()
     const [region, setRegion] = useState(DEFAULT_REGION)
     const [status, setStatus] = useState('requesting')
     const [isSharing, setIsSharing] = useState(false)
@@ -289,6 +292,15 @@ const Map2 = () => {
     return (
         <ThemedViewDriver style={styles.container}>
             <View style={styles.mapWrapper}>
+                
+                {/* Profile Button */}
+                <TouchableOpacity 
+                    style={styles.profileButton}
+                    onPress={() => router.push('/(innerdashboard)/driverprofile')}
+                >
+                    <Ionicons name="person" size={30} color="#fff" />
+                </TouchableOpacity>
+
                 <MapView
                     ref={mapRef}
                     style={styles.map}
@@ -456,6 +468,23 @@ const styles = StyleSheet.create({
     },
     map: {
         flex: 1,
+    },
+    profileButton: {
+        position: 'absolute',
+        top: 60,
+        left: 20,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#1D9BF0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5,
     },
     attribution: {
         position: 'absolute',

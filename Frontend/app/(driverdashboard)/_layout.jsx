@@ -1,13 +1,10 @@
-import { Tabs, useRouter } from "expo-router"
-import { useColorScheme, ActivityIndicator, View } from "react-native"
+import { Stack, useRouter } from "expo-router"
+import { ActivityIndicator, View } from "react-native"
 import { useEffect, useState } from "react"
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ColorsDriver } from "../../constants/ColorsDriver"
-import {Ionicons} from '@expo/vector-icons'
 
 const DashboardLayout = () => {
-    const colorScheme = useColorScheme()
-    const theme = ColorsDriver[colorScheme] ?? ColorsDriver.light
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
     const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -37,8 +34,8 @@ const DashboardLayout = () => {
 
     if (isLoading) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color={theme.text} />
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
+                <ActivityIndicator size="large" color="#1D9BF0" />
             </View>
         )
     }
@@ -48,59 +45,9 @@ const DashboardLayout = () => {
     }
 
   return (
-    <Tabs 
-        screenOptions={{
-            headerShown: false, 
-            tabBarStyle:{
-                backgroundColor: theme.navBackground, 
-                paddingTop: 10,
-                height: 100
-                },
-                tabBarActiveTintColor: theme.iconColorFocused,
-                tabBarInactiveTintColor: theme.iconColor
-            }} 
-        >
-        <Tabs.Screen 
-            name="home" 
-            options={{title: 'Home', tabBarIcon: ({focused}) => (
-                <Ionicons
-                    size={24}
-                    name={focused ? 'home' : 'home-outline'}
-                    color={focused ? theme.iconColorFocused : theme.iconColor}
-                />
-            )}}
-        />
-        <Tabs.Screen 
-            name="map" 
-            options={{title: 'Map', tabBarIcon: ({focused}) => (
-                 <Ionicons
-                    size={24}
-                    name={focused ? 'map' : 'map-outline'}
-                    color={focused ? theme.iconColorFocused : theme.iconColor}
-                />
-            )}}
-        />
-        <Tabs.Screen 
-            name="news" 
-            options={{title: 'News', tabBarIcon: ({focused}) => (
-                <Ionicons
-                    size={24}
-                    name={focused ? 'newspaper' : 'newspaper-outline'}
-                    color={focused ? theme.iconColorFocused : theme.iconColor}
-                />
-            )}}
-        />
-        <Tabs.Screen 
-            name="profile" 
-            options={{title: 'Profile', tabBarIcon: ({focused}) => (
-                <Ionicons
-                    size={24}
-                    name={focused ? 'person' : 'person-outline'}
-                    color={focused ? theme.iconColorFocused : theme.iconColor}
-                />
-            )}}
-        />
-    </Tabs>      
+    <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="map" />
+    </Stack>      
   )
 }
 

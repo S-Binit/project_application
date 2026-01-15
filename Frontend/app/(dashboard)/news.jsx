@@ -1,4 +1,4 @@
-import {StyleSheet, View, ScrollView, RefreshControl, ActivityIndicator, Image} from 'react-native'
+import {StyleSheet, View, ScrollView, RefreshControl, ActivityIndicator, Image, Pressable, Linking} from 'react-native'
 import { useCallback, useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -98,7 +98,16 @@ const News1 = () => {
 
                     {/* News Content */}
                     {!loading && !error && newsData.length > 0 && newsData.map((article, index) => (
-                        <View key={article.article_id || index} style={styles.newsCard}>
+                        <Pressable 
+                            key={article.article_id || index} 
+                            style={styles.newsCard}
+                            onPress={() => {
+                                if (article.link) {
+                                    Linking.openURL(article.link).catch(err => console.error('Failed to open URL:', err));
+                                }
+                            }}
+                        >
+                            <View style={{flex: 1}}>
                             {/* News Image - Top Half */}
                             {article.image_url ? (
                                 <Image 
@@ -131,7 +140,8 @@ const News1 = () => {
                                     </ThemedText>
                                 )}
                             </View>
-                        </View>
+                            </View>
+                        </Pressable>
                     ))}
 
                     {/* No News State */}
