@@ -171,7 +171,7 @@ const Profile1 = () => {
                             <ThemedText style={styles.pickupText}>{pickupText}</ThemedText>
                             
                             <TouchableOpacity 
-                                onPress={() => truckStatus === 'active' && router.push('/(admin)/adminmap')}
+                                onPress={() => truckStatus === 'active' && router.push('/(admin)/map')}
                                 disabled={truckStatus === 'inactive'}
                                 activeOpacity={truckStatus === 'active' ? 0.7 : 1}
                             >
