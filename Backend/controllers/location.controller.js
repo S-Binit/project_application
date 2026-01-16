@@ -60,32 +60,6 @@ exports.shareLocation = async (req, res) => {
   }
 }
 
-exports.getDriverLocation = async (req, res) => {
-  try {
-    const { driverId } = req.params
-    const driver = await Driver.findById(driverId).lean()
-
-    if (!driver) {
-      return res.status(404).json({ message: 'Driver not found' })
-    }
-
-    if (!driver.sharingLocation) {
-      return res.json({ sharing: false, driverId })
-    }
-
-    const [longitude, latitude] = driver.location?.coordinates || []
-    res.json({
-      sharing: true,
-      driverId,
-      location: { latitude, longitude },
-      updatedAt: driver.lastLocationAt,
-    })
-  } catch (error) {
-    console.error('Get driver location error:', error.message)
-    res.status(500).json({ message: 'Failed to fetch driver location' })
-  }
-}
-
 exports.getAllSharedLocations = async (_req, res) => {
   try {
     const drivers = await Driver.find({ sharingLocation: true })
