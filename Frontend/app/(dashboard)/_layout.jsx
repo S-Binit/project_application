@@ -55,6 +55,11 @@ const DashboardLayout = () => {
                               color={focused ? theme.iconColorFocused : theme.iconColor} />
                       )
                   }} />
+              <Tabs.Screen
+                  name="schedule"
+                  options={{
+                      href: null
+                  }} />
           </Tabs>     
   )
 }

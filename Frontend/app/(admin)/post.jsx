@@ -1,65 +1,157 @@
-import {StyleSheet, View, ScrollView, RefreshControl, ActivityIndicator, Image, Pressable, Linking} from 'react-native'
-import { useCallback, useState, useEffect } from 'react';
-import axios from 'axios';
+import {StyleSheet, View, ScrollView, TouchableOpacity, Alert, TextInput, Image, ActivityIndicator, Modal} from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as ImagePicker from 'expo-image-picker'
 
 import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
 import ThemedView from "../../components/ThemedView"
-import { NEWS_API_URL, NEWS_PARAMS } from '../../constants/NewsAPI';
+import { API_BASE } from '../../constants/API'
 
 const News1 = () => {
-    const [refreshing, setRefreshing] = useState(false);
-    const [newsData, setNewsData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const router = useRouter()
+    const [newsList, setNewsList] = useState([])
+    const [loading, setLoading] = useState(false)
+    const [uploading, setUploading] = useState(false)
+    const [showForm, setShowForm] = useState(false)
+    const [title, setTitle] = useState('')
+    const [description, setDescription] = useState('')
+    const [selectedImage, setSelectedImage] = useState(null)
+    const [fullScreenImage, setFullScreenImage] = useState(null)
 
-    // Fetch news from Newsdata.io
-    const fetchNews = useCallback(async (isRefreshing = false) => {
+    const fetchNews = async () => {
         try {
-            setError(null);
-            if (!isRefreshing) {
-                setLoading(true);
+            setLoading(true)
+            const response = await fetch(`${API_BASE}/news`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+
+            const data = await response.json()
+
+            if (data.success) {
+                setNewsList(data.news || [])
             }
-            console.log('Fetching news...');
-            console.log('Timestamp:', new Date().toISOString());
-            
-            const response = await axios.get(NEWS_API_URL, { params: NEWS_PARAMS });
-            
-            console.log('API Response status:', response.status);
-            console.log('Number of results:', response.data?.results?.length || 0);
-            
-            if (response.data && response.data.results) {
-                setNewsData(response.data.results);
-            } else {
-                setNewsData([]);
-            }
-        } catch (err) {
-            console.error('Error fetching news:', err);
-            console.error('Error details:', err.response?.data || err.message);
-            setError('Failed to load news. Please try again.');
+        } catch (error) {
+            console.error('Fetch news error:', error)
         } finally {
-            setLoading(false);
-            setRefreshing(false);
+            setLoading(false)
         }
-    }, []);
+    }
 
-    // Fetch news on component mount
     useEffect(() => {
-        fetchNews();
-    }, [fetchNews]);
+        fetchNews()
+    }, [])
 
-    const onRefresh = useCallback(() => {
-        console.log('Refresh triggered');
-        setRefreshing(true);
-        fetchNews(true);
-    }, [fetchNews]);
+    const pickImage = async () => {
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync()
+
+        if (permissionResult.granted === false) {
+            Alert.alert('Permission Required', 'Permission to access gallery is required!')
+            return
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            quality: 0.8,
+        })
+
+        if (!result.canceled && result.assets[0]) {
+            setSelectedImage(result.assets[0].uri)
+        }
+    }
+
+    const uploadNews = async () => {
+        if (!title.trim() || !description.trim()) {
+            Alert.alert('Error', 'Title and description are required')
+            return
+        }
+
+        setUploading(true)
+        try {
+            const token = await AsyncStorage.getItem('token')
+
+            const response = await fetch(`${API_BASE}/news/upload`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    title: title.trim(),
+                    description: description.trim(),
+                    imageUrl: selectedImage || '',
+                    imagePublicId: selectedImage ? `news_${Date.now()}` : '',
+                }),
+            })
+
+            const data = await response.json()
+
+            if (data.success) {
+                Alert.alert('Success', 'News posted successfully')
+                setTitle('')
+                setDescription('')
+                setSelectedImage(null)
+                setShowForm(false)
+                fetchNews()
+            } else {
+                Alert.alert('Error', data.message || 'Failed to post news')
+            }
+        } catch (error) {
+            console.error('Upload news error:', error)
+            Alert.alert('Error', 'Cannot connect to server')
+        } finally {
+            setUploading(false)
+        }
+    }
+
+    const deleteNews = (newsId) => {
+        Alert.alert(
+            'Delete News',
+            'Are you sure you want to delete this news?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const token = await AsyncStorage.getItem('token')
+                            const response = await fetch(`${API_BASE}/news/${newsId}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                },
+                            })
+
+                            const data = await response.json()
+
+                            if (data.success) {
+                                Alert.alert('Success', 'News deleted successfully')
+                                fetchNews()
+                            } else {
+                                Alert.alert('Error', data.message || 'Failed to delete news')
+                            }
+                        } catch (error) {
+                            console.error('Delete news error:', error)
+                            Alert.alert('Error', 'Cannot connect to server')
+                        }
+                    },
+                },
+            ]
+        )
+    }
 
     return (
         <View style={styles.container}>
             {/* Fixed Header */}
             <ThemedView style={styles.header} safe={true}>
                 <ThemedText title={true} style={styles.heading}>
-                    News
+                    Post
                 </ThemedText>
             </ThemedView>
 
@@ -68,91 +160,161 @@ const News1 = () => {
                 <ScrollView 
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                    bounces={true}
-                    alwaysBounceVertical={true}
-                    overScrollMode="always"
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                            tintColor="#4CAF50"
-                            colors={["#4CAF50"]}
-                        />
-                    }>
+                    showsVerticalScrollIndicator={false}>
                     
-                    {/* Loading State */}
-                    {loading && (
+                    <Spacer height={20} />
+                    
+                    {/* Schedule Button */}
+                    <View style={styles.centerContainer}>
+                        <TouchableOpacity
+                            style={styles.scheduleButton}
+                            onPress={() => router.push('/(admin)/schedule')}>
+                            <Ionicons name="calendar-outline" size={24} color="#fff" />
+                            <ThemedText style={styles.scheduleButtonText}>Manage Schedule</ThemedText>
+                        </TouchableOpacity>
+                    </View>
+
+                    <Spacer height={30} />
+
+                    {/* News Section */}
+                    <View style={styles.newsSection}>
+                        <View style={styles.sectionHeader}>
+                            <ThemedText style={styles.sectionTitle}>Post News</ThemedText>
+                            <TouchableOpacity
+                                style={styles.addButton}
+                                onPress={() => setShowForm(!showForm)}>
+                                <Ionicons name={showForm ? "chevron-up" : "add"} size={24} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+
+                        {showForm && (
+                            <View style={styles.formContainer}>
+                                <ThemedText style={styles.inputLabel}>Title</ThemedText>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="News title..."
+                                    placeholderTextColor="#999"
+                                    value={title}
+                                    onChangeText={setTitle}
+                                />
+
+                                <Spacer height={12} />
+                                <ThemedText style={styles.inputLabel}>Description</ThemedText>
+                                <TextInput
+                                    style={[styles.input, styles.textArea]}
+                                    placeholder="News description..."
+                                    placeholderTextColor="#999"
+                                    value={description}
+                                    onChangeText={setDescription}
+                                    multiline
+                                    numberOfLines={4}
+                                />
+
+                                <Spacer height={12} />
+                                <TouchableOpacity style={styles.pickImageButton} onPress={pickImage}>
+                                    <Ionicons name="image-outline" size={20} color="#4CAF50" />
+                                    <ThemedText style={styles.pickImageText}>
+                                        {selectedImage ? 'Change Image' : 'Add Image (optional)'}
+                                    </ThemedText>
+                                </TouchableOpacity>
+
+                                {selectedImage && (
+                                    <>
+                                        <Spacer height={12} />
+                                        <Image source={{ uri: selectedImage }} style={styles.previewImage} resizeMode="contain" />
+                                    </>
+                                )}
+
+                                <Spacer height={15} />
+                                <TouchableOpacity
+                                    style={[styles.uploadButton, uploading && styles.uploadButtonDisabled]}
+                                    onPress={uploadNews}
+                                    disabled={uploading}>
+                                    {uploading ? (
+                                        <ActivityIndicator size="small" color="#fff" />
+                                    ) : (
+                                        <>
+                                            <Ionicons name="send-outline" size={20} color="#fff" />
+                                            <ThemedText style={styles.uploadButtonText}>Post News</ThemedText>
+                                        </>
+                                    )}
+                                </TouchableOpacity>
+                                <Spacer height={10} />
+                                <TouchableOpacity
+                                    style={styles.cancelButton}
+                                    onPress={() => {
+                                        setShowForm(false)
+                                        setTitle('')
+                                        setDescription('')
+                                        setSelectedImage(null)
+                                    }}>
+                                    <Ionicons name="close-outline" size={20} color="#666" />
+                                    <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    </View>
+
+                    {/* Posted News List */}
+                    {loading ? (
                         <View style={styles.centerContainer}>
                             <ActivityIndicator size="large" color="#4CAF50" />
-                            <ThemedText style={styles.loadingText}>Loading news...</ThemedText>
                         </View>
-                    )}
-
-                    {/* Error State */}
-                    {error && !loading && (
-                        <View style={styles.centerContainer}>
-                            <ThemedText style={styles.errorText}>{error}</ThemedText>
-                        </View>
-                    )}
-
-                    {/* News Content */}
-                    {!loading && !error && newsData.length > 0 && newsData.map((article, index) => (
-                        <Pressable 
-                            key={article.article_id || index} 
-                            style={styles.newsCard}
-                            onPress={() => {
-                                if (article.link) {
-                                    Linking.openURL(article.link).catch(err => console.error('Failed to open URL:', err));
-                                }
-                            }}
-                        >
-                            <View style={{flex: 1}}>
-                            {/* News Image - Top Half */}
-                            {article.image_url ? (
-                                <Image 
-                                    source={{ uri: article.image_url }}
-                                    style={styles.newsImage}
-                                    resizeMode="cover"
-                                />
-                            ) : (
-                                <View style={styles.noImageContainer}>
-                                    <ThemedText style={styles.noImageText}>No Image</ThemedText>
-                                </View>
-                            )}
-                            
-                            {/* News Text - Bottom Half */}
-                            <View style={styles.newsTextContainer}>
-                                <ThemedText style={styles.newsTitle}>
-                                    {article.title || 'No title'}
-                                </ThemedText>
-                                <Spacer/>
-                                <ThemedText style={styles.newsDescription}>
-                                    {article.description || article.content || 'No description available'}
-                                </ThemedText>
-                                {article.pubDate && (
+                    ) : newsList.length > 0 ? (
+                        <View style={styles.newsListContainer}>
+                            <ThemedText style={styles.newsListTitle}>Posted News ({newsList.length})</ThemedText>
+                            {newsList.map((newsItem) => (
+                                <View key={newsItem._id} style={styles.newsCard}>
+                                    {newsItem.imageUrl && (
+                                        <>
+                                            <TouchableOpacity onPress={() => setFullScreenImage(newsItem.imageUrl)}>
+                                                <Image source={{ uri: newsItem.imageUrl }} style={styles.newsImage} resizeMode="cover" />
+                                            </TouchableOpacity>
+                                            <Spacer height={10} />
+                                        </>
+                                    )}
+                                    <ThemedText style={styles.newsTitle}>{newsItem.title}</ThemedText>
+                                    <Spacer height={8} />
+                                    <ThemedText style={styles.newsDescription}>{newsItem.description}</ThemedText>
+                                    <Spacer height={10} />
                                     <ThemedText style={styles.newsDate}>
-                                        {new Date(article.pubDate).toLocaleDateString('en-US', {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric'
-                                        })}
+                                        {new Date(newsItem.createdAt).toLocaleDateString()}
                                     </ThemedText>
-                                )}
-                            </View>
-                            </View>
-                        </Pressable>
-                    ))}
-
-                    {/* No News State */}
-                    {!loading && !error && newsData.length === 0 && (
-                        <View style={styles.centerContainer}>
-                            <ThemedText style={styles.noNewsText}>No news available</ThemedText>
+                                    <Spacer height={12} />
+                                    <TouchableOpacity
+                                        style={styles.deleteNewsButton}
+                                        onPress={() => deleteNews(newsItem._id)}>
+                                        <Ionicons name="trash-outline" size={18} color="#fff" />
+                                        <ThemedText style={styles.deleteNewsButtonText}>Delete</ThemedText>
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
                         </View>
-                    )}
-
+                    ) : null}
                 </ScrollView>
             </ThemedView>
+
+            {/* Full Screen Image Modal */}
+            <Modal
+                visible={fullScreenImage !== null}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setFullScreenImage(null)}>
+                <View style={styles.fullScreenModal}>
+                    <TouchableOpacity
+                        style={styles.closeButton}
+                        onPress={() => setFullScreenImage(null)}>
+                        <Ionicons name="close" size={32} color="#fff" />
+                    </TouchableOpacity>
+                    {fullScreenImage && (
+                        <Image
+                            source={{ uri: fullScreenImage }}
+                            style={styles.fullScreenImage}
+                            resizeMode="contain"
+                        />
+                    )}
+                </View>
+            </Modal>
         </View>
     )
 }
@@ -188,75 +350,209 @@ const styles = StyleSheet.create({
         padding: 20,
         paddingBottom: 40,
     },
-    newsCard: {
-        backgroundColor: '#ffffff',
-        borderRadius: 12,
-        marginBottom: 16,
-        overflow: 'hidden',
-        minHeight: 300,
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    newsImage: {
-        width: '100%',
-        height: 180,
-        backgroundColor: '#f0f0f0',
-    },
-    noImageContainer: {
-        width: '100%',
-        height: 180,
-        backgroundColor: '#e0e0e0',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    noImageText: {
-        fontSize: 16,
-        color: '#999',
-    },
-    newsTextContainer: {
-        padding: 16,
-    },
-    newsTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    newsDescription: {
-        fontSize: 14,
-        lineHeight: 20,
-        color: '#666',
-    },
-    newsDate: {
-        fontSize: 12,
-        color: '#999',
-        marginTop: 8,
-        fontStyle: 'italic',
-    },
     centerContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         paddingVertical: 40,
     },
-    loadingText: {
-        marginTop: 10,
+    scheduleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#4CAF50',
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        borderRadius: 12,
+        gap: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    scheduleButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    newsSection: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 15,
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    sectionTitle: {
         fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    addButton: {
+        backgroundColor: '#4CAF50',
+        borderRadius: 20,
+        padding: 8,
+    },
+    formContainer: {
+        marginTop: 15,
+        paddingTop: 15,
+        borderTopWidth: 1,
+        borderTopColor: '#eee',
+    },
+    inputLabel: {
+        fontSize: 14,
+        color: '#333',
+        marginBottom: 8,
+        fontWeight: '600',
+    },
+    input: {
+        backgroundColor: '#f5f5f5',
+        borderRadius: 8,
+        padding: 12,
+        fontSize: 14,
+        color: '#000',
+        borderWidth: 1,
+        borderColor: '#ddd',
+    },
+    textArea: {
+        textAlignVertical: 'top',
+    },
+    pickImageButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fff',
+        paddingVertical: 12,
+        borderRadius: 8,
+        borderWidth: 2,
+        borderColor: '#4CAF50',
+        borderStyle: 'dashed',
+        gap: 10,
+    },
+    pickImageText: {
+        fontSize: 14,
+        color: '#4CAF50',
+        fontWeight: '600',
+    },
+    previewImage: {
+        width: '100%',
+        height: 200,
+        borderRadius: 8,
+        backgroundColor: '#f0f0f0',
+    },
+    uploadButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#4CAF50',
+        paddingVertical: 12,
+        borderRadius: 8,
+        gap: 8,
+    },
+    uploadButtonDisabled: {
+        backgroundColor: '#a5d6a7',
+    },
+    uploadButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    cancelButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f5f5f5',
+        paddingVertical: 12,
+        borderRadius: 8,
+        gap: 8,
+        borderWidth: 1,
+        borderColor: '#ddd',
+    },
+    cancelButtonText: {
         color: '#666',
-    },
-    errorText: {
         fontSize: 16,
-        color: '#D32F2F',
-        textAlign: 'center',
+        fontWeight: 'bold',
     },
-    noNewsText: {
+    newsListContainer: {
+        marginTop: 20,
+    },
+    newsListTitle: {
         fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 15,
+    },
+    newsCard: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 15,
+        marginBottom: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    newsImage: {
+        width: '100%',
+        height: 250,
+        borderRadius: 8,
+        backgroundColor: '#f0f0f0',
+    },
+    newsTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    newsDescription: {
+        fontSize: 14,
+        color: '#666',
+        lineHeight: 20,
+    },
+    newsDate: {
+        fontSize: 12,
         color: '#999',
-        textAlign: 'center',
     },
-    newsItem: {
-        fontSize: 16,
-        textAlign: 'center',
+    deleteNewsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f44336',
+        paddingVertical: 10,
+        borderRadius: 8,
+        gap: 8,
+    },
+    deleteNewsButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: 'bold',
+    },
+    fullScreenModal: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.95)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fullScreenImage: {
+        width: '100%',
+        height: '100%',
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 40,
+        right: 20,
+        zIndex: 10,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        borderRadius: 20,
+        padding: 8,
     },
 })

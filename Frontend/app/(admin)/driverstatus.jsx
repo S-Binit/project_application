@@ -43,7 +43,7 @@ const DriverStatus = () => {
         },
       })
       const data = await res.json()
-      if (Array.isArray(data.drivers)) {
+      if (data.sharing && Array.isArray(data.drivers)) {
         setSharingIds(new Set(data.drivers.map(d => d.driverId)))
       } else {
         setSharingIds(new Set())

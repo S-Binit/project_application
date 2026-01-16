@@ -95,6 +95,11 @@ const DashboardLayout = () => {
                   options={{
                       href: null
                   }} />
+              <Tabs.Screen
+                  name="schedule"
+                  options={{
+                      href: null
+                  }} />
           </Tabs>     
   )
 }

@@ -1,58 +1,51 @@
-import {StyleSheet, View, ScrollView, RefreshControl, ActivityIndicator, Image, Pressable, Linking} from 'react-native'
-import { useCallback, useState, useEffect } from 'react';
-import axios from 'axios';
+import {StyleSheet, View, ScrollView, TouchableOpacity, Image, Modal, ActivityIndicator, RefreshControl} from 'react-native'
+import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import { useState, useEffect } from 'react'
+import { API_BASE } from '../../constants/API'
 
 import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
 import ThemedView from "../../components/ThemedView"
-import { NEWS_API_URL, NEWS_PARAMS } from '../../constants/NewsAPI';
 
 const News1 = () => {
-    const [refreshing, setRefreshing] = useState(false);
-    const [newsData, setNewsData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const router = useRouter()
+    const [newsList, setNewsList] = useState([])
+    const [loading, setLoading] = useState(false)
+    const [refreshing, setRefreshing] = useState(false)
+    const [fullScreenImage, setFullScreenImage] = useState(null)
 
-    // Fetch news from Newsdata.io
-    const fetchNews = useCallback(async (isRefreshing = false) => {
+    const fetchNews = async () => {
         try {
-            setError(null);
-            if (!isRefreshing) {
-                setLoading(true);
+            setLoading(true)
+            const response = await fetch(`${API_BASE}/news`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+
+            const data = await response.json()
+
+            if (data.success) {
+                setNewsList(data.news || [])
             }
-            console.log('Fetching news...');
-            console.log('Timestamp:', new Date().toISOString());
-            
-            const response = await axios.get(NEWS_API_URL, { params: NEWS_PARAMS });
-            
-            console.log('API Response status:', response.status);
-            console.log('Number of results:', response.data?.results?.length || 0);
-            
-            if (response.data && response.data.results) {
-                setNewsData(response.data.results);
-            } else {
-                setNewsData([]);
-            }
-        } catch (err) {
-            console.error('Error fetching news:', err);
-            console.error('Error details:', err.response?.data || err.message);
-            setError('Failed to load news. Please try again.');
+        } catch (error) {
+            console.error('Fetch news error:', error)
         } finally {
-            setLoading(false);
-            setRefreshing(false);
+            setLoading(false)
         }
-    }, []);
+    }
 
-    // Fetch news on component mount
     useEffect(() => {
-        fetchNews();
-    }, [fetchNews]);
+        fetchNews()
+    }, [])
 
-    const onRefresh = useCallback(() => {
-        console.log('Refresh triggered');
-        setRefreshing(true);
-        fetchNews(true);
-    }, [fetchNews]);
+    const onRefresh = async () => {
+        setRefreshing(true)
+        await fetchNews()
+        setRefreshing(false)
+    }
 
     return (
         <View style={styles.container}>
@@ -69,95 +62,90 @@ const News1 = () => {
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
-                    bounces={true}
-                    alwaysBounceVertical={true}
-                    overScrollMode="always"
                     refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                            tintColor="#4CAF50"
-                            colors={["#4CAF50"]}
-                        />
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                     }>
                     
-                    {/* Loading State */}
-                    {loading && (
+                    <Spacer height={20} />
+                    
+                    {/* Schedule Button */}
+                    <View style={styles.centerContainer}>
+                        <TouchableOpacity
+                            style={styles.scheduleButton}
+                            onPress={() => router.push('/(dashboard)/schedule')}>
+                            <Ionicons name="calendar-outline" size={24} color="#fff" />
+                            <ThemedText style={styles.scheduleButtonText}>View Schedule</ThemedText>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* News Section */}
+                    {loading ? (
                         <View style={styles.centerContainer}>
                             <ActivityIndicator size="large" color="#4CAF50" />
-                            <ThemedText style={styles.loadingText}>Loading news...</ThemedText>
                         </View>
-                    )}
-
-                    {/* Error State */}
-                    {error && !loading && (
-                        <View style={styles.centerContainer}>
-                            <ThemedText style={styles.errorText}>{error}</ThemedText>
-                        </View>
-                    )}
-
-                    {/* News Content */}
-                    {!loading && !error && newsData.length > 0 && newsData.map((article, index) => (
-                        <Pressable 
-                            key={article.article_id || index} 
-                            style={styles.newsCard}
-                            onPress={() => {
-                                if (article.link) {
-                                    Linking.openURL(article.link).catch(err => console.error('Failed to open URL:', err));
-                                }
-                            }}
-                        >
-                            <View style={{flex: 1}}>
-                            {/* News Image - Top Half */}
-                            {article.image_url ? (
-                                <Image 
-                                    source={{ uri: article.image_url }}
-                                    style={styles.newsImage}
-                                    resizeMode="cover"
-                                />
-                            ) : (
-                                <View style={styles.noImageContainer}>
-                                    <ThemedText style={styles.noImageText}>No Image</ThemedText>
-                                </View>
-                            )}
-                            
-                            {/* News Text - Bottom Half */}
-                            <View style={styles.newsTextContainer}>
-                                <ThemedText style={styles.newsTitle}>
-                                    {article.title || 'No title'}
-                                </ThemedText>
-                                <Spacer/>
-                                <ThemedText style={styles.newsDescription}>
-                                    {article.description || article.content || 'No description available'}
-                                </ThemedText>
-                                {article.pubDate && (
+                    ) : newsList.length > 0 ? (
+                        <View style={styles.newsSection}>
+                            <ThemedText style={styles.newsListTitle}>Latest News</ThemedText>
+                            {newsList.map((news) => (
+                                <View key={news._id} style={styles.newsCard}>
+                                    {news.imageUrl && (
+                                        <TouchableOpacity 
+                                            activeOpacity={0.7}
+                                            onPress={() => setFullScreenImage(news.imageUrl)}>
+                                            <Image
+                                                source={{ uri: news.imageUrl }}
+                                                style={styles.newsImage}
+                                            />
+                                        </TouchableOpacity>
+                                    )}
+                                    <Spacer height={10} />
+                                    <ThemedText style={styles.newsTitle}>{news.title}</ThemedText>
+                                    <Spacer height={8} />
+                                    <ThemedText style={styles.newsDescription}>{news.description}</ThemedText>
+                                    <Spacer height={8} />
                                     <ThemedText style={styles.newsDate}>
-                                        {new Date(article.pubDate).toLocaleDateString('en-US', {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric'
-                                        })}
+                                        {news.uploadedByName && `Posted by ${news.uploadedByName}`}
+                                        {news.createdAt && ` • ${new Date(news.createdAt).toLocaleDateString()}`}
                                     </ThemedText>
-                                )}
-                            </View>
-                            </View>
-                        </Pressable>
-                    ))}
-
-                    {/* No News State */}
-                    {!loading && !error && newsData.length === 0 && (
-                        <View style={styles.centerContainer}>
-                            <ThemedText style={styles.noNewsText}>No news available</ThemedText>
+                                </View>
+                            ))}
+                        </View>
+                    ) : (
+                        <View style={styles.emptyContainer}>
+                            <Ionicons name="newspaper-outline" size={48} color="#999" />
+                            <Spacer height={15} />
+                            <ThemedText style={styles.emptyText}>No news available yet</ThemedText>
                         </View>
                     )}
-
                 </ScrollView>
             </ThemedView>
+
+            {/* Full Screen Image Modal */}
+            <Modal
+                visible={!!fullScreenImage}
+                transparent={true}
+                onRequestClose={() => setFullScreenImage(null)}>
+                <View style={styles.fullScreenModal}>
+                    <TouchableOpacity 
+                        style={styles.closeButton}
+                        onPress={() => setFullScreenImage(null)}>
+                        <Ionicons name="close" size={30} color="#fff" />
+                    </TouchableOpacity>
+                    {fullScreenImage && (
+                        <Image
+                            source={{ uri: fullScreenImage }}
+                            style={styles.fullScreenImage}
+                            resizeMode="contain"
+                        />
+                    )}
+                </View>
+            </Modal>
         </View>
     )
 }
 
 export default News1
+
 const styles = StyleSheet.create({
     container:{
         flex: 1,
@@ -188,75 +176,98 @@ const styles = StyleSheet.create({
         padding: 20,
         paddingBottom: 40,
     },
-    newsCard: {
-        backgroundColor: '#ffffff',
+    centerContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 20,
+    },
+    scheduleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#4CAF50',
+        paddingVertical: 15,
+        paddingHorizontal: 30,
         borderRadius: 12,
-        marginBottom: 16,
-        overflow: 'hidden',
-        minHeight: 300,
+        gap: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
         elevation: 3,
+    },
+    scheduleButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    newsSection: {
+        marginTop: 20,
+        marginBottom: 20,
+    },
+    newsListTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 15,
+    },
+    newsCard: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 15,
+        marginBottom: 15,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
+        elevation: 3,
     },
     newsImage: {
         width: '100%',
-        height: 180,
+        height: 200,
+        borderRadius: 8,
         backgroundColor: '#f0f0f0',
     },
-    noImageContainer: {
-        width: '100%',
-        height: 180,
-        backgroundColor: '#e0e0e0',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    noImageText: {
-        fontSize: 16,
-        color: '#999',
-    },
-    newsTextContainer: {
-        padding: 16,
-    },
     newsTitle: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
+        color: '#333',
     },
     newsDescription: {
         fontSize: 14,
-        lineHeight: 20,
         color: '#666',
+        lineHeight: 20,
     },
     newsDate: {
         fontSize: 12,
         color: '#999',
-        marginTop: 8,
-        fontStyle: 'italic',
     },
-    centerContainer: {
-        flex: 1,
+    emptyContainer: {
         justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: 40,
+        paddingVertical: 60,
     },
-    loadingText: {
-        marginTop: 10,
-        fontSize: 16,
-        color: '#666',
-    },
-    errorText: {
-        fontSize: 16,
-        color: '#D32F2F',
-        textAlign: 'center',
-    },
-    noNewsText: {
+    emptyText: {
         fontSize: 16,
         color: '#999',
-        textAlign: 'center',
     },
-    newsItem: {
-        fontSize: 16,
-        textAlign: 'center',
+    fullScreenModal: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.95)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fullScreenImage: {
+        width: '100%',
+        height: '100%',
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 40,
+        right: 20,
+        zIndex: 10,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        borderRadius: 20,
+        padding: 8,
     },
 })

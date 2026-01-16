@@ -46,6 +46,54 @@ const Map2 = () => {
     const watcherRef = useRef(null)
     const mapRef = useRef(null)
     const suggestionTimeoutRef = useRef(null)
+    const [sharedDrivers, setSharedDrivers] = useState([])
+    const [driverId, setDriverId] = useState(null)
+
+    useEffect(() => {
+        const getDriverId = async () => {
+            try {
+                const userId = await AsyncStorage.getItem('userId')
+                setDriverId(userId)
+            } catch (err) {
+                console.error('Error getting driver ID:', err)
+            }
+        }
+        getDriverId()
+    }, [])
+
+    useEffect(() => {
+        let isMounted = true
+
+        const fetchSharedDrivers = async () => {
+            try {
+                const res = await fetch(`${LOCATION_URL}/shared`, {
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        Pragma: 'no-cache',
+                    },
+                })
+                const data = await res.json()
+                if (!isMounted) return
+                if (data.sharing && Array.isArray(data.drivers)) {
+                    setSharedDrivers(data.drivers)
+                } else {
+                    setSharedDrivers([])
+                }
+            } catch (err) {
+                console.error('Fetch shared drivers error:', err)
+                if (isMounted) setSharedDrivers([])
+            }
+        }
+
+        // Fetch immediately and set up polling
+        fetchSharedDrivers()
+        const intervalId = setInterval(fetchSharedDrivers, 1500)
+
+        return () => {
+            isMounted = false
+            clearInterval(intervalId)
+        }
+    }, [])
 
     const sendLocationToServer = useCallback(async (coords, sharingFlag) => {
         try {
@@ -349,6 +397,17 @@ const Map2 = () => {
                             tracksViewChanges={false}
                         />
                     )}
+                    {/* Shared drivers markers */}
+                    {sharedDrivers.map((driver) => (
+                        <Marker
+                            key={driver.driverId}
+                            coordinate={driver.location}
+                            title={driver.name}
+                            description={`Updated ${new Date(driver.updatedAt).toLocaleTimeString()}`}
+                            pinColor={driver.driverId === driverId ? "#4CAF50" : "#1D9BF0"}
+                            tracksViewChanges={false}
+                        />
+                    ))}
                 </MapView>
 
                 {/* OSM attribution */}

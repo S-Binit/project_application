@@ -1,7 +1,7 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {StyleSheet, View, Animated} from 'react-native'
 import Constants from 'expo-constants'
-import MapView, {Marker, AnimatedRegion, UrlTile} from 'react-native-maps'
+import MapView, {Marker, UrlTile} from 'react-native-maps'
 import * as Location from 'expo-location'
 import { useLocalSearchParams } from 'expo-router'
 
@@ -21,15 +21,11 @@ const DEFAULT_REGION = {
     longitudeDelta: 0.6,
 }
 
-// Faster update interval for real-time tracking
-const UPDATE_INTERVAL = 1500 // 1.5 seconds instead of 5 seconds
-
 const Map1 = () => {
     const { driverId, driverName } = useLocalSearchParams()
     const [region, setRegion] = useState(DEFAULT_REGION)
     const [drivers, setDrivers] = useState([])
     const [userLocation, setUserLocation] = useState(null)
-    const [error, setError] = useState(null)
     const [initialLoad, setInitialLoad] = useState(true)
     const [focusedDriver, setFocusedDriver] = useState(driverId || null)
     const mapRef = useRef(null)
@@ -38,12 +34,10 @@ const Map1 = () => {
     // Real-time driver location fetching with faster updates
     useEffect(() => {
         let isMounted = true
-        let fetchCount = 0
 
         const loadDriverLocation = async () => {
             try {
                 const res = await fetch(`${LOCATION_URL}/shared`, {
-                    // Add cache-busting to prevent stale data
                     headers: {
                         'Cache-Control': 'no-cache',
                         'Pragma': 'no-cache'
@@ -54,30 +48,21 @@ const Map1 = () => {
 
                 if (data?.sharing && Array.isArray(data.drivers)) {
                     setDrivers(prev => {
-                        // Only update if data actually changed
                         if (JSON.stringify(prev) === JSON.stringify(data.drivers)) {
                             return prev
                         }
                         return data.drivers
                     })
-                    
-                    setError(null)
                 } else {
                     setDrivers([])
                 }
-                
-                fetchCount++
             } catch (_err) {
                 if (!isMounted) return
-                setError('Unable to load driver location right now.')
             }
         }
 
-        // Load immediately
         loadDriverLocation()
-        
-        // Set up faster polling interval
-        const intervalId = setInterval(loadDriverLocation, UPDATE_INTERVAL)
+        const intervalId = setInterval(loadDriverLocation, 1500)
 
         return () => {
             isMounted = false
@@ -151,29 +136,47 @@ const Map1 = () => {
     const hasDriver = drivers.length > 0
 
     // Optimize marker rendering with useMemo and add timestamp info (filter out bad coords)
-    const driverMarkers = useMemo(() => drivers
-        .filter(d => d?.location && isFinite(d.location.latitude) && isFinite(d.location.longitude))
-        .map(d => {
+    const driverMarkers = useMemo(() => {
+        const filtered = drivers.filter(d => {
+            if (!d) return false
+            const lat = d.location?.latitude
+            const lng = d.location?.longitude
+            const isValid = lat !== undefined && lng !== undefined && isFinite(lat) && isFinite(lng)
+            if (!isValid) {
+                console.log('Admin map - Filtered out driver:', d, 'lat:', lat, 'lng:', lng)
+            }
+            return isValid
+        })
+        console.log('Admin map - Total drivers:', drivers.length, 'Valid markers:', filtered.length)
+        
+        return filtered.map(d => {
             const lastUpdate = d.updatedAt ? new Date(d.updatedAt).toLocaleTimeString() : 'unknown'
-            return {
+            const marker = {
                 key: d.driverId,
-                coordinate: d.location,
+                coordinate: {
+                    latitude: d.location.latitude,
+                    longitude: d.location.longitude
+                },
                 title: d.name ? `Driver: ${d.name}` : 'Driver',
                 description: `Live • Updated: ${lastUpdate}`,
                 updatedAt: d.updatedAt,
             }
-        }), [drivers])
+            console.log('Admin map - Created marker:', marker)
+            return marker
+        })
+    }, [drivers])
 
     // Fit map to all shared driver coordinates when they arrive
     useEffect(() => {
-        if (!mapRef.current || driverMarkers.length === 0) return
+        if (!mapRef.current) return
 
         // If a specific driver is focused, center on that driver
-        if (focusedDriver) {
+        if (focusedDriver && driverMarkers.length > 0) {
             const targetDriver = driverMarkers.find(m => m.key === focusedDriver)
             if (targetDriver) {
                 mapRef.current.animateToRegion({
-                    ...targetDriver.coordinate,
+                    latitude: targetDriver.coordinate.latitude,
+                    longitude: targetDriver.coordinate.longitude,
                     latitudeDelta: 0.02,
                     longitudeDelta: 0.02,
                 }, 1000)
@@ -182,12 +185,17 @@ const Map1 = () => {
             }
         }
 
-        // Otherwise fit to all drivers
-        const coords = driverMarkers.map(m => m.coordinate)
-        mapRef.current.fitToCoordinates(coords, {
-            edgePadding: { top: 60, right: 60, bottom: 60, left: 60 },
-            animated: true,
-        })
+        // If there are driver markers, fit to all of them
+        if (driverMarkers.length > 0) {
+            const coords = driverMarkers.map(m => ({
+                latitude: m.coordinate.latitude,
+                longitude: m.coordinate.longitude
+            }))
+            mapRef.current.fitToCoordinates(coords, {
+                edgePadding: { top: 60, right: 60, bottom: 60, left: 60 },
+                animated: true,
+            })
+        }
     }, [driverMarkers, focusedDriver])
 
     return (

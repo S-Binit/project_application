@@ -18,6 +18,8 @@ app.use('/api/location', require('./routes/location.routes'))
 app.use('/api/route', require('./routes/route.routes'))
 app.use('/api/feedback', require('./routes/feedback.routes'))
 app.use('/api/driver', require('./routes/driver.routes'))
+app.use('/api/schedule', require('./routes/schedule.routes'))
+app.use('/api/news', require('./routes/news.routes'))
 
 // Health check
 app.get('/health', (_req, res) => res.json({ ok: true }))
