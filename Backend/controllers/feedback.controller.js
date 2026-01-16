@@ -47,7 +47,7 @@ exports.getFeedback = async (req, res) => {
   try {
     const userId = req.user.id
 
-    const feedbacks = await Feedback.find({ userId }).sort({ createdAt: -1 })
+    const feedbacks = await Feedback.find({ userId, deletedByUser: false }).sort({ createdAt: -1 })
 
     res.json({
       success: true,
@@ -61,7 +61,7 @@ exports.getFeedback = async (req, res) => {
 
 exports.getAllFeedback = async (req, res) => {
   try {
-    const feedbacks = await Feedback.find().sort({ createdAt: -1 })
+    const feedbacks = await Feedback.find({ deletedByAdmin: false }).sort({ createdAt: -1 })
 
     res.json({
       success: true,
@@ -119,7 +119,19 @@ exports.deleteFeedback = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this feedback' })
     }
 
-    await Feedback.findByIdAndDelete(feedbackId)
+    // Mark as deleted for the appropriate role
+    if (userRole === 'admin') {
+      feedback.deletedByAdmin = true
+    } else {
+      feedback.deletedByUser = true
+    }
+
+    // If both user and admin have deleted, remove the record completely
+    if (feedback.deletedByUser && feedback.deletedByAdmin) {
+      await Feedback.findByIdAndDelete(feedbackId)
+    } else {
+      await feedback.save()
+    }
 
     res.json({
       success: true,

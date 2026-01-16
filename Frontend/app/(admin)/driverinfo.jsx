@@ -115,7 +115,7 @@ const DriverInfo = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.push('/(admin)/drivermanagement')}>
           <Ionicons name="arrow-back" size={28} color="#000" />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Driver Info</ThemedText>

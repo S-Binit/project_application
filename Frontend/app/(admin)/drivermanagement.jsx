@@ -60,7 +60,9 @@ const DriverManagement = () => {
         <Spacer height={15} />
 
         {/* Driver Status */}
-        <TouchableOpacity style={styles.optionCard}>
+        <TouchableOpacity 
+          style={styles.optionCard}
+          onPress={() => router.push('/(admin)/driverstatus')}>
           <View style={[styles.iconContainer, { backgroundColor: '#fff3e0' }]}>
             <Ionicons name="speedometer" size={32} color="#FF9800" />
           </View>

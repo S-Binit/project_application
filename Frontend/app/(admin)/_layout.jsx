@@ -90,6 +90,11 @@ const DashboardLayout = () => {
                   options={{
                       href: null
                   }} />
+              <Tabs.Screen
+                  name="driverstatus"
+                  options={{
+                      href: null
+                  }} />
           </Tabs>     
   )
 }

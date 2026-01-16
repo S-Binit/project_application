@@ -3,6 +3,7 @@ import {StyleSheet, View, Animated} from 'react-native'
 import Constants from 'expo-constants'
 import MapView, {Marker, AnimatedRegion, UrlTile} from 'react-native-maps'
 import * as Location from 'expo-location'
+import { useLocalSearchParams } from 'expo-router'
 
 import ThemedView from "../../components/ThemedView"
 import {LOCATION_URL} from "../../constants/API"
@@ -24,11 +25,13 @@ const DEFAULT_REGION = {
 const UPDATE_INTERVAL = 1500 // 1.5 seconds instead of 5 seconds
 
 const Map1 = () => {
+    const { driverId, driverName } = useLocalSearchParams()
     const [region, setRegion] = useState(DEFAULT_REGION)
     const [drivers, setDrivers] = useState([])
     const [userLocation, setUserLocation] = useState(null)
     const [error, setError] = useState(null)
     const [initialLoad, setInitialLoad] = useState(true)
+    const [focusedDriver, setFocusedDriver] = useState(driverId || null)
     const mapRef = useRef(null)
     const locationWatcherRef = useRef(null)
 
@@ -146,18 +149,46 @@ const Map1 = () => {
     }, [userLocation, initialLoad])
 
     const hasDriver = drivers.length > 0
-    
-    // Optimize marker rendering with useMemo and add timestamp info
-    const driverMarkers = useMemo(() => drivers.map(d => {
-        const lastUpdate = d.updatedAt ? new Date(d.updatedAt).toLocaleTimeString() : 'unknown'
-        return {
-            key: d.driverId,
-            coordinate: d.location,
-            title: d.name ? `Driver: ${d.name}` : 'Driver',
-            description: `Live • Updated: ${lastUpdate}`,
-            updatedAt: d.updatedAt,
+
+    // Optimize marker rendering with useMemo and add timestamp info (filter out bad coords)
+    const driverMarkers = useMemo(() => drivers
+        .filter(d => d?.location && isFinite(d.location.latitude) && isFinite(d.location.longitude))
+        .map(d => {
+            const lastUpdate = d.updatedAt ? new Date(d.updatedAt).toLocaleTimeString() : 'unknown'
+            return {
+                key: d.driverId,
+                coordinate: d.location,
+                title: d.name ? `Driver: ${d.name}` : 'Driver',
+                description: `Live • Updated: ${lastUpdate}`,
+                updatedAt: d.updatedAt,
+            }
+        }), [drivers])
+
+    // Fit map to all shared driver coordinates when they arrive
+    useEffect(() => {
+        if (!mapRef.current || driverMarkers.length === 0) return
+
+        // If a specific driver is focused, center on that driver
+        if (focusedDriver) {
+            const targetDriver = driverMarkers.find(m => m.key === focusedDriver)
+            if (targetDriver) {
+                mapRef.current.animateToRegion({
+                    ...targetDriver.coordinate,
+                    latitudeDelta: 0.02,
+                    longitudeDelta: 0.02,
+                }, 1000)
+                setFocusedDriver(null) // Clear focus after centering
+                return
+            }
         }
-    }), [drivers])
+
+        // Otherwise fit to all drivers
+        const coords = driverMarkers.map(m => m.coordinate)
+        mapRef.current.fitToCoordinates(coords, {
+            edgePadding: { top: 60, right: 60, bottom: 60, left: 60 },
+            animated: true,
+        })
+    }, [driverMarkers, focusedDriver])
 
     return (
         <ThemedView style={styles.container}>

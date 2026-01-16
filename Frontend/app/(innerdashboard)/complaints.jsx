@@ -254,6 +254,7 @@ const AdminComplaints = () => {
             onPress={() => setFilterStatus('all')}>
             <ThemedText style={[styles.filterButtonText, filterStatus === 'all' && styles.filterButtonTextActive]}>All Status</ThemedText>
           </TouchableOpacity>
+
           <TouchableOpacity
             style={[styles.filterButton, filterStatus === 'pending' && styles.filterButtonActive]}
             onPress={() => setFilterStatus('pending')}>
@@ -276,7 +277,7 @@ const AdminComplaints = () => {
       {filteredData.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="inbox-outline" size={64} color="#ccc" />
-          <ThemedText style={styles.emptyText}>No complaints or feedback</ThemedText>
+          <ThemedText style={styles.emptyText}>{filterType === 'complaint' ? 'No complaints' : filterType === 'feedback' ? 'No feedbacks' : 'No complaints or feedbacks'}</ThemedText>
         </View>
       ) : (
         <FlatList

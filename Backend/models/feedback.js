@@ -41,6 +41,14 @@ const feedbackSchema = new mongoose.Schema(
     adminResponse: {
       type: String,
     },
+    deletedByUser: {
+      type: Boolean,
+      default: false,
+    },
+    deletedByAdmin: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 )

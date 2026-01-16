@@ -218,12 +218,13 @@ const MyFeedback = () => {
       {filteredData.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="chatbubbles-outline" size={64} color="#ccc" />
-          <ThemedText style={styles.emptyText}>No feedback submitted yet</ThemedText>
-          <TouchableOpacity 
-            style={styles.submitButton}
-            onPress={() => router.back()}>
-            <ThemedText style={styles.submitButtonText}>Submit Feedback</ThemedText>
-          </TouchableOpacity>
+          <ThemedText style={styles.emptyText}>
+            {filterType === 'feedback'
+              ? 'No feedbacks'
+              : filterType === 'complaint'
+              ? 'No complaints'
+              : 'No complaints or feedbacks'}
+          </ThemedText>
         </View>
       ) : (
         <FlatList

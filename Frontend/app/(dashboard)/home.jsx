@@ -278,7 +278,9 @@ const Profile1 = () => {
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
-                            <ThemedText style={styles.modalTitle}>Submit Feedback</ThemedText>
+                            <ThemedText style={styles.modalTitle}>
+                                {feedbackType === 'complaint' ? 'Submit Complaint' : 'Submit Feedback'}
+                            </ThemedText>
                             <TouchableOpacity 
                                 onPress={() => setFeedbackModalVisible(false)}
                                 hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
@@ -356,7 +358,11 @@ const Profile1 = () => {
                             onPress={handleSubmitFeedback}
                             disabled={submitting}>
                             <ThemedText style={styles.submitButtonText}>
-                                {submitting ? 'Submitting...' : 'Submit'}
+                                {submitting
+                                    ? 'Submitting...'
+                                    : feedbackType === 'complaint'
+                                    ? 'Submit Complaint'
+                                    : 'Submit Feedback'}
                             </ThemedText>
                         </TouchableOpacity>
                     </View>
