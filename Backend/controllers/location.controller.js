@@ -86,23 +86,6 @@ exports.getDriverLocation = async (req, res) => {
   }
 }
 
-exports.getLatestSharedLocation = async (_req, res) => {
-  try {
-    const driver = await Driver.findOne({ sharingLocation: true })
-      .sort({ lastLocationAt: -1 })
-      .lean()
-
-    if (!driver) {
-      return res.json({ sharing: false })
-    }
-
-    res.json(mapDriverToResponse(driver))
-  } catch (error) {
-    console.error('Get latest location error:', error.message)
-    res.status(500).json({ message: 'Failed to fetch location' })
-  }
-}
-
 exports.getAllSharedLocations = async (_req, res) => {
   try {
     const drivers = await Driver.find({ sharingLocation: true })

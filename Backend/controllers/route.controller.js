@@ -55,8 +55,6 @@ exports.calculateRoute = async (req, res) => {
 
     const coordinates = `${startLon},${startLat};${endLon},${endLat}`
     const url = `${OSRM_BASE}/driving/${coordinates}`
-    
-    console.log('Calculating route:', url)
 
     const response = await axios.get(url, {
       params: {
@@ -68,8 +66,6 @@ exports.calculateRoute = async (req, res) => {
         'User-Agent': 'project-app/1.0',
       },
     })
-
-    console.log('OSRM response:', response.data)
 
     if (response.data.code === 'Ok' && response.data.routes && response.data.routes[0]) {
       const route = response.data.routes[0]
@@ -88,7 +84,6 @@ exports.calculateRoute = async (req, res) => {
       })
     }
 
-    console.log('No route found in response:', response.data)
     res.json({ success: false, message: 'Route not found or unreachable' })
   } catch (error) {
     console.error('Route calculation error:', error.message)
