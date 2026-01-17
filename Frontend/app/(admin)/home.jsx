@@ -21,52 +21,11 @@ const Profile1 = () => {
         const updateDate = () => {
             const today = new Date();
             
-            // Nepali months (Bikram Sambat)
-            const nepaliMonths = [
-                'Baisakh', 'Jestha', 'Asar', 'Shrawan', 'Bhadra', 'Ashoj',
-                'Kartik', 'Mangsir', 'Poush', 'Magh', 'Falgun', 'Chaitra'
-            ];
+            // Format date in AD (Anno Domini) format
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = today.toLocaleDateString('en-US', options);
             
-            // Nepali days of week
-            const nepaliDays = [
-                'Sunday', 'Monday', 'Tuesday', 'Wednesday', 
-                'Thursday', 'Friday', 'Saturday'
-            ];
-            
-            // Calculate Bikram Sambat year and month more accurately
-            const month = today.getMonth(); // 0-11
-            const day = today.getDate();
-            
-            // Nepali year conversion from Gregorian
-            // The conversion date is usually mid-April (around April 13-14)
-            let nepaliYear = today.getFullYear() + 56;
-            if (month >= 3) {
-                nepaliYear = today.getFullYear() + 57;
-            }
-            
-            // More accurate month mapping based on Gregorian to Bikram Sambat conversion
-            // This accounts for the approximate conversion around mid-April
-            let nepaliMonth = month;
-            let nepaliDay = day;
-            
-            // Adjust for the transition around mid-April
-            if (month === 3 && day >= 13) { // April 13 onwards
-                nepaliMonth = 0; // Baisakh
-                nepaliDay = day - 13;
-            } else if (month < 3) { // Jan-Mar
-                nepaliMonth = (month + 8) % 12; // Maps to Poush, Magh, Falgun of previous Nepali year
-                if (month === 0) nepaliDay = day + 16; // Jan -> Poush (approx)
-                else if (month === 1) nepaliDay = day + 17; // Feb -> Magh (approx)
-                else nepaliDay = day + 16; // Mar -> Falgun (approx)
-            } else { // Apr-Dec
-                nepaliMonth = month - 3;
-                nepaliDay = day - 13;
-            }
-            
-            const nepaliMonthName = nepaliMonths[nepaliMonth];
-            const nepaliDayName = nepaliDays[today.getDay()];
-            
-            setCurrentDate(`${nepaliDayName}, ${nepaliMonthName} ${nepaliDay}, ${nepaliYear}`);
+            setCurrentDate(formattedDate);
             
             // Determine truck status based on day of week
             // 0 = Sunday, 2 = Tuesday, 4 = Thursday
