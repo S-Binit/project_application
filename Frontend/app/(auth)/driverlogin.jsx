@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors'
 import { Ionicons} from '@expo/vector-icons';
-import { API_URL } from '../../constants/API';
+import { AUTH_URL } from '../../constants/API';
 
 
 //themed components
@@ -44,7 +44,7 @@ const DriverLogin = () => {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_URL}/driver/login`, {
+            const response = await fetch(`${AUTH_URL}/driver/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

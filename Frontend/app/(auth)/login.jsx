@@ -7,7 +7,7 @@ import { Link, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../../constants/Colors'
 import { Ionicons} from '@expo/vector-icons';
-import { API_URL } from '../../constants/API';
+import { AUTH_URL } from '../../constants/API';
 
 
 //themed components
@@ -42,7 +42,7 @@ const Login = () => {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_URL}/login`, {
+            const response = await fetch(`${AUTH_URL}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

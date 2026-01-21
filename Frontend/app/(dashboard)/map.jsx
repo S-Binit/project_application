@@ -123,41 +123,32 @@ const Map1 = () => {
         }
     }, [])
 
-    // Auto-center map on user's location when first location is obtained
-    useEffect(() => {
-        if (!userLocation || !initialLoad) return
-
-        const newRegion = {
-            latitude: userLocation.latitude,
-            longitude: userLocation.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-        }
-        setRegion(newRegion)
-        
-        // Use setTimeout to ensure MapView is ready
-        setTimeout(() => {
-            if (mapRef.current) {
-                mapRef.current.animateToRegion(newRegion, 1000)
-            }
-        }, 500)
-        
-        setInitialLoad(false)
-    }, [userLocation, initialLoad])
-
     const hasDriver = drivers.length > 0
     
     // Optimize marker rendering with useMemo and add timestamp info
-    const driverMarkers = useMemo(() => drivers.map(d => {
-        const lastUpdate = d.updatedAt ? new Date(d.updatedAt).toLocaleTimeString() : 'unknown'
-        return {
-            key: d.driverId,
-            coordinate: d.location,
-            title: d.name ? `Driver: ${d.name}` : 'Driver',
-            description: `Live • Updated: ${lastUpdate}`,
-            updatedAt: d.updatedAt,
-        }
-    }), [drivers])
+    const driverMarkers = useMemo(() => {
+        const deduped = new Map()
+
+        drivers.forEach(d => {
+            const lat = d?.location?.latitude
+            const lng = d?.location?.longitude
+            const valid = Number.isFinite(lat) && Number.isFinite(lng)
+            if (!valid) return
+
+            if (!deduped.has(d.driverId)) {
+                const lastUpdate = d.updatedAt ? new Date(d.updatedAt).toLocaleTimeString() : 'unknown'
+                deduped.set(d.driverId, {
+                    key: d.driverId,
+                    coordinate: { latitude: lat, longitude: lng },
+                    title: d.name ? `Driver: ${d.name}` : 'Driver',
+                    description: `Live • Updated: ${lastUpdate}`,
+                    updatedAt: d.updatedAt,
+                })
+            }
+        })
+
+        return Array.from(deduped.values())
+    }, [drivers])
 
     return (
         <ThemedView style={styles.container}>
@@ -197,15 +188,6 @@ const Map1 = () => {
                             tracksViewChanges={false}
                         />
                     ))}
-                    {userLocation && (
-                        <Marker
-                            coordinate={userLocation}
-                            title="You"
-                            description="Your live location"
-                            pinColor="#1D9BF0"
-                            tracksViewChanges={false}
-                        />
-                    )}
                 </MapView>
                 {/* OSM attribution (required) */}
                 <View style={styles.attribution} pointerEvents="none">

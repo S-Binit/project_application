@@ -1,13 +1,15 @@
+const fs = require('fs')
+const path = require('path')
 const Schedule = require('../models/schedule')
 const Admin = require('../models/admin')
 
 exports.uploadSchedule = async (req, res) => {
   try {
     const adminId = req.user.id
-    const { imageUrl, imagePublicId, description } = req.body
+    const { description } = req.body
 
-    if (!imageUrl || !imagePublicId) {
-      return res.status(400).json({ message: 'Image URL and public ID are required' })
+    if (!req.file) {
+      return res.status(400).json({ message: 'Image file is required' })
     }
 
     const admin = await Admin.findById(adminId)
@@ -15,10 +17,12 @@ exports.uploadSchedule = async (req, res) => {
       return res.status(404).json({ message: 'Admin not found' })
     }
 
-    // Create new schedule image
+    const fileName = req.file.filename
+    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${fileName}`
+
     const schedule = await Schedule.create({
       imageUrl,
-      imagePublicId,
+      imagePublicId: fileName,
       uploadedBy: adminId,
       uploadedByName: admin.name,
       description: description || '',
@@ -35,7 +39,7 @@ exports.uploadSchedule = async (req, res) => {
   }
 }
 
-exports.getSchedule = async (req, res) => {
+exports.getSchedule = async (_req, res) => {
   try {
     const schedules = await Schedule.find().sort({ createdAt: -1 })
 
@@ -61,6 +65,13 @@ exports.deleteSchedule = async (req, res) => {
 
     if (!schedule) {
       return res.status(404).json({ message: 'Schedule not found' })
+    }
+
+    // Remove file from disk if present
+    const fileName = schedule.imagePublicId || path.basename(schedule.imageUrl || '')
+    if (fileName) {
+      const filePath = path.join(__dirname, '..', 'uploads', fileName)
+      fs.unlink(filePath, () => {})
     }
 
     await Schedule.findByIdAndDelete(scheduleId)

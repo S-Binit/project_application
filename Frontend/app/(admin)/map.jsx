@@ -137,66 +137,28 @@ const Map1 = () => {
 
     // Optimize marker rendering with useMemo and add timestamp info (filter out bad coords)
     const driverMarkers = useMemo(() => {
-        const filtered = drivers.filter(d => {
-            if (!d) return false
-            const lat = d.location?.latitude
-            const lng = d.location?.longitude
-            const isValid = lat !== undefined && lng !== undefined && isFinite(lat) && isFinite(lng)
-            if (!isValid) {
-                console.log('Admin map - Filtered out driver:', d, 'lat:', lat, 'lng:', lng)
+        const deduped = new Map()
+
+        drivers.forEach(d => {
+            const lat = d?.location?.latitude
+            const lng = d?.location?.longitude
+            const isValid = Number.isFinite(lat) && Number.isFinite(lng)
+            if (!isValid) return
+
+            if (!deduped.has(d.driverId)) {
+                const lastUpdate = d.updatedAt ? new Date(d.updatedAt).toLocaleTimeString() : 'unknown'
+                deduped.set(d.driverId, {
+                    key: d.driverId,
+                    coordinate: { latitude: lat, longitude: lng },
+                    title: d.name ? `Driver: ${d.name}` : 'Driver',
+                    description: `Live • Updated: ${lastUpdate}`,
+                    updatedAt: d.updatedAt,
+                })
             }
-            return isValid
         })
-        console.log('Admin map - Total drivers:', drivers.length, 'Valid markers:', filtered.length)
-        
-        return filtered.map(d => {
-            const lastUpdate = d.updatedAt ? new Date(d.updatedAt).toLocaleTimeString() : 'unknown'
-            const marker = {
-                key: d.driverId,
-                coordinate: {
-                    latitude: d.location.latitude,
-                    longitude: d.location.longitude
-                },
-                title: d.name ? `Driver: ${d.name}` : 'Driver',
-                description: `Live • Updated: ${lastUpdate}`,
-                updatedAt: d.updatedAt,
-            }
-            console.log('Admin map - Created marker:', marker)
-            return marker
-        })
+
+        return Array.from(deduped.values())
     }, [drivers])
-
-    // Fit map to all shared driver coordinates when they arrive
-    useEffect(() => {
-        if (!mapRef.current) return
-
-        // If a specific driver is focused, center on that driver
-        if (focusedDriver && driverMarkers.length > 0) {
-            const targetDriver = driverMarkers.find(m => m.key === focusedDriver)
-            if (targetDriver) {
-                mapRef.current.animateToRegion({
-                    latitude: targetDriver.coordinate.latitude,
-                    longitude: targetDriver.coordinate.longitude,
-                    latitudeDelta: 0.02,
-                    longitudeDelta: 0.02,
-                }, 1000)
-                setFocusedDriver(null) // Clear focus after centering
-                return
-            }
-        }
-
-        // If there are driver markers, fit to all of them
-        if (driverMarkers.length > 0) {
-            const coords = driverMarkers.map(m => ({
-                latitude: m.coordinate.latitude,
-                longitude: m.coordinate.longitude
-            }))
-            mapRef.current.fitToCoordinates(coords, {
-                edgePadding: { top: 60, right: 60, bottom: 60, left: 60 },
-                animated: true,
-            })
-        }
-    }, [driverMarkers, focusedDriver])
 
     return (
         <ThemedView style={styles.container}>
@@ -236,15 +198,6 @@ const Map1 = () => {
                             tracksViewChanges={false}
                         />
                     ))}
-                    {userLocation && (
-                        <Marker
-                            coordinate={userLocation}
-                            title="You"
-                            description="Your live location"
-                            pinColor="#1D9BF0"
-                            tracksViewChanges={false}
-                        />
-                    )}
                 </MapView>
                 {/* OSM attribution (required) */}
                 <View style={styles.attribution} pointerEvents="none">

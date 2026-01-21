@@ -70,21 +70,26 @@ const Schedule = () => {
 
     setUploading(true)
     try {
-      // For now, we'll use a placeholder URL since we don't have image upload service
-      // In production, you'd upload to Cloudinary or similar service
       const token = await AsyncStorage.getItem('token')
-      
+      const uri = selectedImage
+      const fileName = uri.split('/').pop() || `schedule-${Date.now()}.jpg`
+      const ext = fileName.split('.').pop()
+      const mimeType = ext ? `image/${ext.toLowerCase()}` : 'image/jpeg'
+
+      const formData = new FormData()
+      formData.append('image', {
+        uri,
+        name: fileName,
+        type: mimeType,
+      })
+      formData.append('description', description.trim())
+
       const response = await fetch(`${API_BASE}/schedule/upload`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          imageUrl: selectedImage,
-          imagePublicId: `schedule_${Date.now()}`,
-          description: description.trim(),
-        }),
+        body: formData,
       })
 
       const data = await response.json()

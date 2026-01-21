@@ -75,7 +75,21 @@ const Map2 = () => {
                 const data = await res.json()
                 if (!isMounted) return
                 if (data.sharing && Array.isArray(data.drivers)) {
-                    setSharedDrivers(data.drivers)
+                    // Deduplicate by driverId and drop invalid coords
+                    const deduped = new Map()
+                    data.drivers.forEach(d => {
+                        const lat = d?.location?.latitude
+                        const lng = d?.location?.longitude
+                        const isValid = Number.isFinite(lat) && Number.isFinite(lng)
+                        if (!isValid) return
+                        if (!deduped.has(d.driverId)) {
+                            deduped.set(d.driverId, {
+                                ...d,
+                                location: { latitude: lat, longitude: lng },
+                            })
+                        }
+                    })
+                    setSharedDrivers(Array.from(deduped.values()))
                 } else {
                     setSharedDrivers([])
                 }
@@ -397,17 +411,19 @@ const Map2 = () => {
                             tracksViewChanges={false}
                         />
                     )}
-                    {/* Shared drivers markers */}
-                    {sharedDrivers.map((driver) => (
-                        <Marker
-                            key={driver.driverId}
-                            coordinate={driver.location}
-                            title={driver.name}
-                            description={`Updated ${new Date(driver.updatedAt).toLocaleTimeString()}`}
-                            pinColor={driver.driverId === driverId ? "#4CAF50" : "#1D9BF0"}
-                            tracksViewChanges={false}
-                        />
-                    ))}
+                    {/* Shared drivers markers (exclude self to avoid duplicate pin) */}
+                    {sharedDrivers
+                        .filter(driver => driver.driverId !== driverId)
+                        .map((driver) => (
+                            <Marker
+                                key={driver.driverId}
+                                coordinate={driver.location}
+                                title={driver.name}
+                                description={`Updated ${new Date(driver.updatedAt).toLocaleTimeString()}`}
+                                pinColor="#1D9BF0"
+                                tracksViewChanges={false}
+                            />
+                        ))}
                 </MapView>
 
                 {/* OSM attribution */}

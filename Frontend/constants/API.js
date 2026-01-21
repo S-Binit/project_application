@@ -1,20 +1,19 @@
 import Constants from 'expo-constants';
 
 // Single source of truth: set API_URL in app.json → expo.extra.API_URL
-// Recommended format: "http://<YOUR-IP>:5000/api/auth"
+// Should be base API path like: "http://<YOUR-IP>:5000/api"
 const configuredUrl = Constants?.expoConfig?.extra?.API_URL;
 
-// Keep original for backwards compatibility with existing auth calls
-export const API_URL = configuredUrl;
-
-// Derive base (strip trailing /auth if present) for other services like location
-export const API_BASE = configuredUrl?.replace(/\/?auth$/, '') || configuredUrl;
+// API_URL is the base, e.g., http://192.168.18.16:5000/api
+export const API_BASE = configuredUrl || 'http://localhost:5000/api';
 export const AUTH_URL = `${API_BASE}/auth`;
 export const LOCATION_URL = `${API_BASE}/location`;
+export const API_URL = AUTH_URL; // Keep for backwards compatibility
 
 if (__DEV__) {
-  console.log('[API] Using API_URL:', API_URL);
   console.log('[API] Using API_BASE:', API_BASE);
+  console.log('[API] Using AUTH_URL:', AUTH_URL);
+  console.log('[API] Using LOCATION_URL:', LOCATION_URL);
 }
 
-export default API_URL;
+export default API_BASE;
