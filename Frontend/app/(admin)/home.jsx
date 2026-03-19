@@ -165,21 +165,27 @@ const Profile1 = () => {
 
                     <Spacer height={20}/>
 
-                    {/* Driver Management Button */}
-                    <TouchableOpacity 
-                        style={styles.driverManagementButton}
-                        onPress={() => router.push('/(admin)/drivermanagement')}>
-                        <ThemedText style={styles.driverManagementText}>Driver Management</ThemedText>
-                    </TouchableOpacity>
+                    {/* Admin Quick Actions */}
+                    <View style={styles.actionRow}>
+                        <TouchableOpacity
+                            style={styles.actionButton}
+                            onPress={() => router.push('/(admin)/drivermanagement')}>
+                            <ThemedText style={styles.actionButtonText}>Driver Management</ThemedText>
+                        </TouchableOpacity>
 
-                    <Spacer height={14}/>
+                        <TouchableOpacity
+                            style={styles.actionButton}
+                            onPress={() => router.push('/(admin)/admindash')}>
+                            <ThemedText style={styles.actionButtonText}>Live Operations Board</ThemedText>
+                        </TouchableOpacity>
 
-                    {/* Live Operations Board Button */}
-                    <TouchableOpacity
-                        style={styles.driverManagementButton}
-                        onPress={() => router.push('/(admin)/admindash')}>
-                        <ThemedText style={styles.driverManagementText}>Live Operations Board</ThemedText>
-                    </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.actionButton}
+                            onPress={() => router.push('/(admin)/payments')}>
+                            <ThemedText style={styles.actionButtonText}>Payments</ThemedText>
+                        </TouchableOpacity>
+                    </View>
+
                     
                     {/* Add more content here to test scrolling */}
                 
@@ -369,24 +375,33 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
     },
-    // Driver Management Button
-    driverManagementButton: {
-        backgroundColor: '#FF9800',
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderRadius: 12,
-        alignItems: 'center',
+    actionRow: {
+        flexDirection: 'row',
+        alignItems: 'stretch',
+        justifyContent: 'space-between',
+        gap: 8,
         marginBottom: 20,
+    },
+    actionButton: {
+        flex: 1,
+        backgroundColor: '#FF9800',
+        borderRadius: 12,
+        minHeight: 84,
+        paddingHorizontal: 10,
+        paddingVertical: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 2,
     },
-    driverManagementText: {
+    actionButtonText: {
         color: '#FFF',
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold',
+        textAlign: 'center',
     },
     complaintsText: {
         fontSize: 18,

@@ -2,6 +2,7 @@ const axios = require('axios')
 const crypto = require('crypto')
 const Bill = require('../models/bill')
 const Payment = require('../models/payment')
+const BillingConfig = require('../models/billingConfig')
 
 const FALLBACK_SUCCESS_URL = process.env.PAYMENT_SUCCESS_URL || 'https://example.com/payment/success'
 const FALLBACK_FAILURE_URL = process.env.PAYMENT_FAILURE_URL || 'https://example.com/payment/failure'
@@ -26,15 +27,34 @@ function getNextMonthDate(date) {
   return new Date(date.getFullYear(), date.getMonth() + 1, 1)
 }
 
-async function ensureBillForMonth(userId, monthDate, amount = DEFAULT_BILL_AMOUNT) {
+async function getConfiguredMonthlyAmount() {
+  const config = await BillingConfig.findOneAndUpdate(
+    { key: 'global' },
+    {
+      $setOnInsert: {
+        monthlyAmount: DEFAULT_BILL_AMOUNT,
+      },
+    },
+    { new: true, upsert: true }
+  )
+
+  const amount = Number(config?.monthlyAmount)
+  return Number.isFinite(amount) && amount > 0 ? amount : DEFAULT_BILL_AMOUNT
+}
+
+async function ensureBillForMonth(userId, monthDate, amount) {
   const billingMonth = getBillingMonthLabel(monthDate)
   const dueDate = getDueDateForMonth(monthDate)
+  const parsedAmount = Number(amount)
+  const billAmount = Number.isFinite(parsedAmount) && parsedAmount > 0
+    ? parsedAmount
+    : await getConfiguredMonthlyAmount()
 
   const bill = await Bill.findOneAndUpdate(
     { userId, billingMonth },
     {
       $setOnInsert: {
-        amount,
+        amount: billAmount,
         dueDate,
         status: 'pending',
       },
@@ -57,7 +77,7 @@ async function ensureCurrentPendingBill(userId) {
 async function createNextBill(userId, paidBill) {
   const baseDate = paidBill?.dueDate ? new Date(paidBill.dueDate) : new Date()
   const nextMonthDate = getNextMonthDate(baseDate)
-  return ensureBillForMonth(userId, nextMonthDate, paidBill?.amount || DEFAULT_BILL_AMOUNT)
+  return ensureBillForMonth(userId, nextMonthDate)
 }
 
 function buildEsewaPayload({ amount, transactionId, successUrl, failureUrl }) {
@@ -475,5 +495,96 @@ exports.getPaymentHistory = async (req, res) => {
   } catch (error) {
     console.error('Get payment history error:', error.message)
     return res.status(500).json({ message: 'Failed to fetch payment history' })
+  }
+}
+
+exports.getAdminPaidUsers = async (_req, res) => {
+  try {
+    const payments = await Payment.find({ status: 'success' })
+      .sort({ paidAt: -1, createdAt: -1 })
+      .populate('userId', 'name email')
+      .populate('billId', 'billingMonth')
+      .limit(200)
+
+    const paidUsers = payments.map((payment) => ({
+      paymentId: payment._id,
+      userId: payment.userId?._id || null,
+      userName: payment.userId?.name || 'Unknown User',
+      userEmail: payment.userId?.email || 'Unknown Email',
+      billMonth: payment.billId?.billingMonth || 'Unknown',
+      provider: payment.provider,
+      amount: payment.amount,
+      transactionId: payment.transactionId,
+      paidAt: payment.paidAt || payment.createdAt,
+    }))
+
+    const uniqueUserIds = new Set(paidUsers.map((item) => String(item.userId || '')))
+
+    const totalAmountCollected = paidUsers.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+
+    return res.json({
+      success: true,
+      totalPayments: paidUsers.length,
+      totalPaidUsers: Array.from(uniqueUserIds).filter(Boolean).length,
+      totalAmountCollected,
+      payments: paidUsers,
+    })
+  } catch (error) {
+    console.error('Get admin paid users error:', error.message)
+    return res.status(500).json({ message: 'Failed to fetch paid users list' })
+  }
+}
+
+exports.getAdminMonthlyBillSettings = async (_req, res) => {
+  try {
+    const monthlyAmount = await getConfiguredMonthlyAmount()
+
+    return res.json({
+      success: true,
+      monthlyAmount,
+      defaultAmount: DEFAULT_BILL_AMOUNT,
+    })
+  } catch (error) {
+    console.error('Get monthly bill settings error:', error.message)
+    return res.status(500).json({ message: 'Failed to fetch monthly bill settings' })
+  }
+}
+
+exports.updateAdminMonthlyBillSettings = async (req, res) => {
+  try {
+    const rawAmount = Number(req.body?.monthlyAmount)
+    const applyToPendingBills = req.body?.applyToPendingBills !== false
+
+    if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
+      return res.status(400).json({ message: 'monthlyAmount must be a positive number' })
+    }
+
+    const monthlyAmount = Number(rawAmount.toFixed(2))
+
+    await BillingConfig.findOneAndUpdate(
+      { key: 'global' },
+      { $set: { monthlyAmount } },
+      { new: true, upsert: true }
+    )
+
+    let updatedPendingBills = 0
+    if (applyToPendingBills) {
+      const currentMonth = getBillingMonthLabel(new Date())
+      const updateResult = await Bill.updateMany(
+        { status: 'pending', billingMonth: currentMonth },
+        { $set: { amount: monthlyAmount } }
+      )
+      updatedPendingBills = Number(updateResult?.modifiedCount || 0)
+    }
+
+    return res.json({
+      success: true,
+      monthlyAmount,
+      updatedPendingBills,
+      message: 'Monthly bill amount updated successfully',
+    })
+  } catch (error) {
+    console.error('Update monthly bill settings error:', error.message)
+    return res.status(500).json({ message: 'Failed to update monthly bill settings' })
   }
 }

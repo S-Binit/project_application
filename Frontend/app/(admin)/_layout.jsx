@@ -100,6 +100,21 @@ const DashboardLayout = () => {
                   options={{
                       href: null
                   }} />
+              <Tabs.Screen
+                  name="paymentusers"
+                  options={{
+                      href: null
+                  }} />
+              <Tabs.Screen
+                  name="setmonthlybill"
+                  options={{
+                      href: null
+                  }} />
+              <Tabs.Screen
+                  name="payments"
+                  options={{
+                      href: null
+                  }} />
           </Tabs>     
   )
 }
