@@ -28,6 +28,37 @@ const feedbackSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    complaintCategory: {
+      type: String,
+      enum: ['general', 'missed_pickup'],
+      default: 'general',
+    },
+    priority: {
+      type: String,
+      enum: ['normal', 'high'],
+      default: 'normal',
+    },
+    isMissedPickup: {
+      type: Boolean,
+      default: false,
+    },
+    location: {
+      latitude: {
+        type: Number,
+      },
+      longitude: {
+        type: Number,
+      },
+      address: {
+        type: String,
+      },
+    },
+    photoUrl: {
+      type: String,
+    },
+    photoPublicId: {
+      type: String,
+    },
     rating: {
       type: Number,
       min: 1,

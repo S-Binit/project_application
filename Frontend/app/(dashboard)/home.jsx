@@ -3,6 +3,8 @@ import { Ionicons} from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 
 import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
@@ -18,11 +20,14 @@ const Profile1 = () => {
     const [truckStatus, setTruckStatus] = useState('active'); // 'active' or 'inactive'
     const [pickupText, setPickupText] = useState('');
     const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
-    const [feedbackType, setFeedbackType] = useState('complaint');
     const [feedbackSubject, setFeedbackSubject] = useState('');
     const [feedbackMessage, setFeedbackMessage] = useState('');
-    const [feedbackRating, setFeedbackRating] = useState(5);
     const [submitting, setSubmitting] = useState(false);
+    const [missedModalVisible, setMissedModalVisible] = useState(false);
+    const [missedMessage, setMissedMessage] = useState('');
+    const [missedPhoto, setMissedPhoto] = useState(null);
+    const [missedLocation, setMissedLocation] = useState(null);
+    const [capturingLocation, setCapturingLocation] = useState(false);
 
     // Update date on mount and every minute
     useEffect(() => {
@@ -102,26 +107,145 @@ const Profile1 = () => {
                     'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify({
-                    type: feedbackType,
+                    type: 'complaint',
                     subject: feedbackSubject,
                     message: feedbackMessage,
-                    rating: feedbackType === 'feedback' ? feedbackRating : null,
+                    rating: null,
                 }),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                Alert.alert('Success', 'Your feedback has been submitted!');
+                Alert.alert('Success', 'Your complaint has been submitted!');
                 setFeedbackModalVisible(false);
                 setFeedbackSubject('');
                 setFeedbackMessage('');
-                setFeedbackRating(5);
             } else {
-                Alert.alert('Error', data.message || 'Failed to submit feedback');
+                Alert.alert('Error', data.message || 'Failed to submit complaint');
             }
         } catch (error) {
-            console.error('Feedback submission error:', error);
+            console.error('Complaint submission error:', error);
+            Alert.alert('Error', 'Cannot connect to server');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handlePayBillPress = () => {
+        router.push('/(dashboard)/paybill');
+    };
+
+    const fetchCurrentLocation = async () => {
+        try {
+            setCapturingLocation(true);
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Needed', 'Location permission is required to submit missed pickup with auto location.');
+                return;
+            }
+
+            const current = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Balanced,
+            });
+
+            setMissedLocation({
+                latitude: current.coords.latitude,
+                longitude: current.coords.longitude,
+            });
+        } catch (error) {
+            Alert.alert('Location Error', 'Could not get your current location. Please try again.');
+        } finally {
+            setCapturingLocation(false);
+        }
+    };
+
+    const handleOpenMissedModal = async () => {
+        setMissedModalVisible(true);
+        if (!missedLocation) {
+            await fetchCurrentLocation();
+        }
+    };
+
+    const pickMissedPhoto = async (source) => {
+        try {
+            if (source === 'camera') {
+                const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+                if (cameraPermission.status !== 'granted') {
+                    Alert.alert('Permission Needed', 'Camera permission is required.');
+                    return;
+                }
+            } else {
+                const mediaPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                if (mediaPermission.status !== 'granted') {
+                    Alert.alert('Permission Needed', 'Gallery permission is required.');
+                    return;
+                }
+            }
+
+            const result = source === 'camera'
+                ? await ImagePicker.launchCameraAsync({ quality: 0.7, allowsEditing: true })
+                : await ImagePicker.launchImageLibraryAsync({ quality: 0.7, allowsEditing: true });
+
+            if (!result.canceled && result.assets?.[0]?.uri) {
+                setMissedPhoto(result.assets[0]);
+            }
+        } catch (_error) {
+            Alert.alert('Image Error', 'Unable to select photo right now.');
+        }
+    };
+
+    const handleSubmitMissedPickup = async () => {
+        if (!missedPhoto?.uri) {
+            Alert.alert('Validation Error', 'Please add a photo for missed pickup report.');
+            return;
+        }
+
+        if (!missedLocation?.latitude || !missedLocation?.longitude) {
+            Alert.alert('Validation Error', 'Auto location is required. Tap refresh location and try again.');
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            const token = await AsyncStorage.getItem('token');
+            const formData = new FormData();
+            formData.append('type', 'complaint');
+            formData.append('subject', 'Missed pickup in my area');
+            formData.append('message', missedMessage.trim() || 'Driver missed pickup in my area.');
+            formData.append('isMissedPickup', 'true');
+            formData.append('complaintCategory', 'missed_pickup');
+            formData.append('latitude', String(missedLocation.latitude));
+            formData.append('longitude', String(missedLocation.longitude));
+
+            const fileName = missedPhoto.fileName || `missed-pickup-${Date.now()}.jpg`;
+            formData.append('photo', {
+                uri: missedPhoto.uri,
+                name: fileName,
+                type: missedPhoto.mimeType || 'image/jpeg',
+            });
+
+            const response = await fetch(`${API_BASE}/feedback/submit`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                Alert.alert('Submitted', 'Missed pickup report sent with high priority.');
+                setMissedModalVisible(false);
+                setMissedMessage('');
+                setMissedPhoto(null);
+                setMissedLocation(null);
+            } else {
+                Alert.alert('Error', data.message || 'Failed to submit missed pickup report.');
+            }
+        } catch (error) {
+            console.error('Missed pickup submission error:', error);
             Alert.alert('Error', 'Cannot connect to server');
         } finally {
             setSubmitting(false);
@@ -204,8 +328,6 @@ const Profile1 = () => {
                             />
                             <View style={styles.rightTextContainer}>
                                 <ThemedText style={styles.complaintsText}>Complaints</ThemedText>
-                                <ThemedText style={styles.middleText}>and</ThemedText>
-                                <ThemedText style={styles.feedbacksText}>Feedbacks</ThemedText>
                             </View>
                         </View>
                         <TouchableOpacity 
@@ -215,12 +337,35 @@ const Profile1 = () => {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Square Button Below Report Container */}
-                    <TouchableOpacity 
-                        style={styles.squareButton}
-                        onPress={() => router.push('/(innerdashboard)/myfeedback')}>
-                        <ThemedIonicons name="document-text" size={32} style={styles.squareButtonIcon} />
-                        <ThemedText style={styles.squareButtonText}>My Reports</ThemedText>
+                    {/* My Reports + Pay Bill Row */}
+                    <View style={styles.actionRow}>
+                        <TouchableOpacity
+                            style={styles.squareButton}
+                            onPress={handleOpenMissedModal}>
+                            <ThemedIonicons name="alert-circle" size={32} style={[styles.squareButtonIcon, { color: '#ef6c00' }]} />
+                            <ThemedText style={styles.squareButtonText}>Missed My Area</ThemedText>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.squareButton}
+                            onPress={() => router.push('/(innerdashboard)/myfeedback')}>
+                            <ThemedIonicons name="document-text" size={32} style={styles.squareButtonIcon} />
+                            <ThemedText style={styles.squareButtonText}>My Reports</ThemedText>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.squareButton}
+                            onPress={handlePayBillPress}>
+                            <ThemedIonicons name="card" size={32} style={styles.squareButtonIcon} />
+                            <ThemedText style={styles.squareButtonText}>Pay Bill</ThemedText>
+                        </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity
+                        style={styles.paymentReportBelowButton}
+                        onPress={() => router.push('/(dashboard)/paymentreport')}>
+                        <ThemedIonicons name="bar-chart" size={24} style={styles.paymentReportIcon} />
+                        <ThemedText style={styles.paymentReportBelowText}>Payment Report</ThemedText>
                     </TouchableOpacity>
                     
                     {/* Add more content here to test scrolling */}
@@ -237,31 +382,11 @@ const Profile1 = () => {
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
-                            <ThemedText style={styles.modalTitle}>
-                                {feedbackType === 'complaint' ? 'Submit Complaint' : 'Submit Feedback'}
-                            </ThemedText>
+                            <ThemedText style={styles.modalTitle}>Submit Complaint</ThemedText>
                             <TouchableOpacity 
                                 onPress={() => setFeedbackModalVisible(false)}
                                 hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
                                 <Ionicons name="close" size={28} color="#666" />
-                            </TouchableOpacity>
-                        </View>
-
-                        {/* Type Selection */}
-                        <View style={styles.typeSelectionContainer}>
-                            <TouchableOpacity
-                                style={[styles.typeButton, feedbackType === 'complaint' && styles.typeButtonActive]}
-                                onPress={() => setFeedbackType('complaint')}>
-                                <ThemedText style={[styles.typeButtonText, feedbackType === 'complaint' && styles.typeButtonTextActive]}>
-                                    Complaint
-                                </ThemedText>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.typeButton, feedbackType === 'feedback' && styles.typeButtonActive]}
-                                onPress={() => setFeedbackType('feedback')}>
-                                <ThemedText style={[styles.typeButtonText, feedbackType === 'feedback' && styles.typeButtonTextActive]}>
-                                    Feedback
-                                </ThemedText>
                             </TouchableOpacity>
                         </View>
                         
@@ -290,38 +415,84 @@ const Profile1 = () => {
                             maxLength={500}
                         />
 
-                        {/* Rating (only for feedback) */}
-                        {feedbackType === 'feedback' && (
-                            <View>
-                                <ThemedText style={styles.inputLabel}>Rating</ThemedText>
-                                <View style={styles.ratingContainer}>
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                        <TouchableOpacity
-                                            key={star}
-                                            onPress={() => setFeedbackRating(star)}
-                                            style={styles.starButton}>
-                                            <Ionicons
-                                                name={star <= feedbackRating ? "star" : "star-outline"}
-                                                size={32}
-                                                color={star <= feedbackRating ? "#FFD700" : "#ccc"}
-                                            />
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-                            </View>
-                        )}
-
                         {/* Submit Button */}
                         <TouchableOpacity
                             style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
                             onPress={handleSubmitFeedback}
                             disabled={submitting}>
                             <ThemedText style={styles.submitButtonText}>
-                                {submitting
-                                    ? 'Submitting...'
-                                    : feedbackType === 'complaint'
-                                    ? 'Submit Complaint'
-                                    : 'Submit Feedback'}
+                                {submitting ? 'Submitting...' : 'Submit Complaint'}
+                            </ThemedText>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            <Modal
+                visible={missedModalVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setMissedModalVisible(false)}>
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <ThemedText style={styles.modalTitle}>Missed My Area</ThemedText>
+                            <TouchableOpacity
+                                onPress={() => setMissedModalVisible(false)}
+                                hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                                <Ionicons name="close" size={28} color="#666" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ThemedText style={styles.helperText}>Quick high-priority complaint with photo and auto location.</ThemedText>
+
+                        <View style={styles.photoActionsRow}>
+                            <TouchableOpacity style={styles.photoButton} onPress={() => pickMissedPhoto('camera')}>
+                                <Ionicons name="camera" size={18} color="#fff" />
+                                <ThemedText style={styles.photoButtonText}>Take Photo</ThemedText>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.photoButton} onPress={() => pickMissedPhoto('gallery')}>
+                                <Ionicons name="images" size={18} color="#fff" />
+                                <ThemedText style={styles.photoButtonText}>Choose Photo</ThemedText>
+                            </TouchableOpacity>
+                        </View>
+
+                        {missedPhoto?.uri && (
+                            <Image source={{ uri: missedPhoto.uri }} style={styles.previewImage} resizeMode="cover" />
+                        )}
+
+                        <View style={styles.locationRow}>
+                            <View style={styles.locationTextWrap}>
+                                <ThemedText style={styles.inputLabel}>Auto Location</ThemedText>
+                                <ThemedText style={styles.locationValue}>
+                                    {missedLocation
+                                        ? `${missedLocation.latitude.toFixed(5)}, ${missedLocation.longitude.toFixed(5)}`
+                                        : 'Not captured yet'}
+                                </ThemedText>
+                            </View>
+                            <TouchableOpacity style={styles.refreshLocationBtn} onPress={fetchCurrentLocation} disabled={capturingLocation}>
+                                <Ionicons name="refresh" size={18} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ThemedText style={styles.inputLabel}>Message (Optional)</ThemedText>
+                        <TextInput
+                            style={[styles.input, styles.messageInput]}
+                            placeholder="Add extra detail (house landmark, street, etc.)"
+                            placeholderTextColor="#999"
+                            value={missedMessage}
+                            onChangeText={setMissedMessage}
+                            multiline={true}
+                            numberOfLines={4}
+                            maxLength={500}
+                        />
+
+                        <TouchableOpacity
+                            style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+                            onPress={handleSubmitMissedPickup}
+                            disabled={submitting || capturingLocation}>
+                            <ThemedText style={styles.submitButtonText}>
+                                {submitting ? 'Submitting...' : 'Submit Missed Pickup'}
                             </ThemedText>
                         </TouchableOpacity>
                     </View>
@@ -395,13 +566,11 @@ const styles = StyleSheet.create({
     },
     heading:{
         fontWeight: "bold",
-        fontSize: 24,
-        textAlign: "center",
-        marginTop: 10,
-        marginBottom: 10,
+        fontSize: 13,
+        fontWeight: 'bold',
+        color: '#4CAF50',
     },
     dateContainer: {
-        backgroundColor: '#FFF',
         borderRadius: 12,
         padding: 16,
         marginBottom: 20,
@@ -555,6 +724,95 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
         textAlign: 'center',
+    },
+    actionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        marginBottom: 12,
+    },
+    paymentReportBelowButton: {
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#4CAF50',
+        height: 56,
+        width: '100%',
+        paddingHorizontal: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    paymentReportIcon: {
+        color: '#4CAF50',
+    },
+    paymentReportBelowText: {
+        color: '#4CAF50',
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    helperText: {
+        fontSize: 13,
+        color: '#4d4d4d',
+        marginBottom: 12,
+    },
+    photoActionsRow: {
+        flexDirection: 'row',
+        gap: 10,
+        marginBottom: 10,
+    },
+    photoButton: {
+        flex: 1,
+        backgroundColor: '#2E7D32',
+        borderRadius: 8,
+        paddingVertical: 10,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 6,
+    },
+    photoButtonText: {
+        color: '#fff',
+        fontWeight: '600',
+    },
+    previewImage: {
+        width: '100%',
+        height: 160,
+        borderRadius: 10,
+        marginBottom: 10,
+    },
+    locationRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 10,
+        backgroundColor: '#f6f8f6',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+    },
+    locationTextWrap: {
+        flex: 1,
+    },
+    locationValue: {
+        fontSize: 12,
+        color: '#2d2d2d',
+    },
+    refreshLocationBtn: {
+        backgroundColor: '#2E7D32',
+        borderRadius: 20,
+        width: 34,
+        height: 34,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     // Modal Styles
     modalContainer: {

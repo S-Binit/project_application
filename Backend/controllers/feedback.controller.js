@@ -3,11 +3,26 @@ const User = require('../models/user')
 
 exports.submitFeedback = async (req, res) => {
   try {
-    const { type, subject, message, rating } = req.body
+    const {
+      type,
+      subject,
+      message,
+      rating,
+      complaintCategory,
+      isMissedPickup,
+      latitude,
+      longitude,
+      address,
+    } = req.body
     const userId = req.user.id
 
+    const missedPickup = isMissedPickup === true || isMissedPickup === 'true' || complaintCategory === 'missed_pickup'
+
+    const trimmedSubject = subject?.trim() || (missedPickup ? 'Missed pickup in my area' : '')
+    const trimmedMessage = message?.trim() || (missedPickup ? 'Driver missed pickup in my area.' : '')
+
     // Validation
-    if (!type || !subject?.trim() || !message?.trim()) {
+    if (!type || !trimmedSubject || !trimmedMessage) {
       return res.status(400).json({ message: 'Type, subject, and message are required' })
     }
 
@@ -21,14 +36,35 @@ exports.submitFeedback = async (req, res) => {
       return res.status(404).json({ message: 'User not found' })
     }
 
+    const parsedLatitude = latitude !== undefined && latitude !== null && latitude !== '' ? Number(latitude) : null
+    const parsedLongitude = longitude !== undefined && longitude !== null && longitude !== '' ? Number(longitude) : null
+
+    const hasValidCoordinates =
+      Number.isFinite(parsedLatitude) && parsedLatitude >= -90 && parsedLatitude <= 90 &&
+      Number.isFinite(parsedLongitude) && parsedLongitude >= -180 && parsedLongitude <= 180
+
+    const imageUrl = req.file ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}` : null
+
     // Create feedback
     const feedback = await Feedback.create({
       userId,
       userName: user.name,
       userEmail: user.email,
       type,
-      subject: subject.trim(),
-      message: message.trim(),
+      subject: trimmedSubject,
+      message: trimmedMessage,
+      complaintCategory: missedPickup ? 'missed_pickup' : 'general',
+      priority: missedPickup ? 'high' : 'normal',
+      isMissedPickup: missedPickup,
+      location: hasValidCoordinates
+        ? {
+            latitude: parsedLatitude,
+            longitude: parsedLongitude,
+            address: address?.trim?.() || '',
+          }
+        : undefined,
+      photoUrl: imageUrl || undefined,
+      photoPublicId: req.file?.filename || undefined,
       rating: rating && rating >= 1 && rating <= 5 ? rating : null,
     })
 
@@ -63,9 +99,18 @@ exports.getAllFeedback = async (req, res) => {
   try {
     const feedbacks = await Feedback.find({ deletedByAdmin: false }).sort({ createdAt: -1 })
 
+    const sortedFeedbacks = feedbacks.sort((a, b) => {
+      const aPriority = a.priority === 'high' ? 1 : 0
+      const bPriority = b.priority === 'high' ? 1 : 0
+      if (aPriority !== bPriority) {
+        return bPriority - aPriority
+      }
+      return new Date(b.createdAt) - new Date(a.createdAt)
+    })
+
     res.json({
       success: true,
-      feedbacks,
+      feedbacks: sortedFeedbacks,
     })
   } catch (error) {
     console.error('Get all feedback error:', error.message)

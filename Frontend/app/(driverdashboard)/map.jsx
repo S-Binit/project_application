@@ -11,6 +11,7 @@ import ThemedButton from "../../components/ThemedButton"
 import ThemedText from "../../components/ThemedText"
 import ThemedViewDriver from "../../components/ThemedViewDriver"
 import {LOCATION_URL, API_BASE} from "../../constants/API"
+import { createSocketClient } from '../../utils/socket'
 
 const TILE_URL = Constants?.expoConfig?.extra?.TILE_URL
 const TILE_USER_AGENT = Constants?.expoConfig?.extra?.TILE_USER_AGENT
@@ -29,6 +30,12 @@ const DEFAULT_REGION = {
 const LOCATION_UPDATE_INTERVAL = 1000 // 1 second
 const LOCATION_DISTANCE_INTERVAL = 5 // 5 meters
 
+const regionFromCoords = (coords) => ({
+    ...DEFAULT_REGION,
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+})
+
 const Map2 = () => {
     const router = useRouter()
     const [region, setRegion] = useState(DEFAULT_REGION)
@@ -46,6 +53,7 @@ const Map2 = () => {
     const watcherRef = useRef(null)
     const mapRef = useRef(null)
     const suggestionTimeoutRef = useRef(null)
+    const socketRef = useRef(null)
     const [sharedDrivers, setSharedDrivers] = useState([])
     const [driverId, setDriverId] = useState(null)
 
@@ -101,11 +109,27 @@ const Map2 = () => {
 
         // Fetch immediately and set up polling
         fetchSharedDrivers()
-        const intervalId = setInterval(fetchSharedDrivers, 1500)
+
+        const connectSocket = async () => {
+            const token = await AsyncStorage.getItem('token')
+            const socket = createSocketClient(token)
+            socketRef.current = socket
+
+            socket.on('drivers:update', (payload) => {
+                if (!isMounted) return
+                if (payload?.sharing && Array.isArray(payload.drivers)) {
+                    setSharedDrivers(payload.drivers)
+                } else {
+                    setSharedDrivers([])
+                }
+            })
+        }
+
+        connectSocket()
 
         return () => {
             isMounted = false
-            clearInterval(intervalId)
+            socketRef.current?.disconnect()
         }
     }, [])
 
@@ -180,31 +204,77 @@ const Map2 = () => {
 
         const startLocationUpdates = async () => {
             try {
+                const servicesEnabled = await Location.hasServicesEnabledAsync()
+                if (!isMounted) return
+                if (!servicesEnabled) {
+                    setStatus('error')
+                    setShareError('Location services are off. Please enable GPS in iPhone settings.')
+                    return
+                }
+
                 const {status: permissionStatus} = await Location.requestForegroundPermissionsAsync()
                 if (!isMounted) return
 
                 if (permissionStatus !== 'granted') {
                     setStatus('denied')
+                    setShareError('Location permission denied. Allow location access for this app.')
                     return
                 }
 
                 setStatus('pending')
+
+                // iOS can delay high-accuracy watcher callbacks; seed with last/current location first.
+                const lastKnown = await Location.getLastKnownPositionAsync()
+                if (isMounted && lastKnown?.coords?.latitude && lastKnown?.coords?.longitude) {
+                    const seededRegion = regionFromCoords(lastKnown.coords)
+                    setRegion(seededRegion)
+                    setStatus('ready')
+                    setShareError(null)
+
+                    if (initialCenter) {
+                        setTimeout(() => {
+                            if (mapRef.current) {
+                                mapRef.current.animateToRegion(seededRegion, 800)
+                            }
+                        }, 300)
+                        setInitialCenter(false)
+                    }
+                }
+
+                const current = await Location.getCurrentPositionAsync({
+                    accuracy: Location.Accuracy.Balanced,
+                    maximumAge: 10000,
+                })
+
+                if (isMounted && current?.coords?.latitude && current?.coords?.longitude) {
+                    const currentRegion = regionFromCoords(current.coords)
+                    setRegion(currentRegion)
+                    setStatus('ready')
+                    setShareError(null)
+
+                    if (initialCenter) {
+                        setTimeout(() => {
+                            if (mapRef.current) {
+                                mapRef.current.animateToRegion(currentRegion, 800)
+                            }
+                        }, 300)
+                        setInitialCenter(false)
+                    }
+                }
+
                 watcherRef.current = await Location.watchPositionAsync(
                     {
-                        accuracy: Location.Accuracy.High, // Higher accuracy for drivers
+                        accuracy: Location.Accuracy.Balanced,
                         timeInterval: LOCATION_UPDATE_INTERVAL,
                         distanceInterval: LOCATION_DISTANCE_INTERVAL,
                     },
                     async ({coords}) => {
                         if (!isMounted) return
 
-                        const nextRegion = {
-                            ...DEFAULT_REGION,
-                            latitude: coords.latitude,
-                            longitude: coords.longitude,
-                        }
+                        const nextRegion = regionFromCoords(coords)
                         setRegion(nextRegion)
                         setStatus('ready')
+                        setShareError(null)
                         
                         // Auto-center map on driver's location when first loaded
                         if (initialCenter) {
@@ -225,6 +295,7 @@ const Map2 = () => {
             } catch (_err) {
                 if (!isMounted) return
                 setStatus('error')
+                setShareError('Unable to get GPS location. Move outdoors and try again.')
             }
         }
 

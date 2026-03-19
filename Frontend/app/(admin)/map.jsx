@@ -3,10 +3,12 @@ import {StyleSheet, View, Animated} from 'react-native'
 import Constants from 'expo-constants'
 import MapView, {Marker, UrlTile} from 'react-native-maps'
 import * as Location from 'expo-location'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useLocalSearchParams } from 'expo-router'
 
 import ThemedView from "../../components/ThemedView"
 import {LOCATION_URL} from "../../constants/API"
+import { createSocketClient } from '../../utils/socket'
 
 const TILE_URL = Constants?.expoConfig?.extra?.TILE_URL
 const TILE_USER_AGENT = Constants?.expoConfig?.extra?.TILE_USER_AGENT
@@ -22,7 +24,7 @@ const DEFAULT_REGION = {
 }
 
 const Map1 = () => {
-    const { driverId, driverName } = useLocalSearchParams()
+    const { driverId, driverName, complaintLat, complaintLng, complaintLabel } = useLocalSearchParams()
     const [region, setRegion] = useState(DEFAULT_REGION)
     const [drivers, setDrivers] = useState([])
     const [userLocation, setUserLocation] = useState(null)
@@ -30,8 +32,16 @@ const Map1 = () => {
     const [focusedDriver, setFocusedDriver] = useState(driverId || null)
     const mapRef = useRef(null)
     const locationWatcherRef = useRef(null)
+    const socketRef = useRef(null)
 
-    // Real-time driver location fetching with faster updates
+    const complaintCoordinate = useMemo(() => {
+        const lat = Number(complaintLat)
+        const lng = Number(complaintLng)
+        const valid = Number.isFinite(lat) && Number.isFinite(lng)
+        return valid ? { latitude: lat, longitude: lng } : null
+    }, [complaintLat, complaintLng])
+
+    // Load initial locations and subscribe to socket updates.
     useEffect(() => {
         let isMounted = true
 
@@ -61,14 +71,29 @@ const Map1 = () => {
             }
         }
 
+        const connectSocket = async () => {
+            const token = await AsyncStorage.getItem('token')
+            const socket = createSocketClient(token)
+            socketRef.current = socket
+
+            socket.on('drivers:update', (payload) => {
+                if (!isMounted) return
+                if (payload?.sharing && Array.isArray(payload.drivers)) {
+                    setDrivers(payload.drivers)
+                } else {
+                    setDrivers([])
+                }
+            })
+        }
+
         loadDriverLocation()
-        const intervalId = setInterval(loadDriverLocation, 1500)
+        connectSocket()
 
         return () => {
             isMounted = false
-            clearInterval(intervalId)
+            socketRef.current?.disconnect()
         }
-    }, [initialLoad])
+    }, [])
 
     // Continuous real-time user location tracking
     useEffect(() => {
@@ -113,7 +138,28 @@ const Map1 = () => {
 
     // Auto-center map on user's location when first location is obtained
     useEffect(() => {
-        if (!userLocation || !initialLoad) return
+        if (!initialLoad) return
+
+        if (complaintCoordinate) {
+            const complaintRegion = {
+                latitude: complaintCoordinate.latitude,
+                longitude: complaintCoordinate.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+            }
+
+            setRegion(complaintRegion)
+            setTimeout(() => {
+                if (mapRef.current) {
+                    mapRef.current.animateToRegion(complaintRegion, 1000)
+                }
+            }, 500)
+
+            setInitialLoad(false)
+            return
+        }
+
+        if (!userLocation) return
 
         const newRegion = {
             latitude: userLocation.latitude,
@@ -131,7 +177,7 @@ const Map1 = () => {
         }, 500)
         
         setInitialLoad(false)
-    }, [userLocation, initialLoad])
+    }, [userLocation, initialLoad, complaintCoordinate])
 
     const hasDriver = drivers.length > 0
 
@@ -198,6 +244,15 @@ const Map1 = () => {
                             tracksViewChanges={false}
                         />
                     ))}
+                    {complaintCoordinate && (
+                        <Marker
+                            coordinate={complaintCoordinate}
+                            title={complaintLabel || 'Complaint Location'}
+                            description="Missed pickup complaint location"
+                            pinColor="#ff9800"
+                            tracksViewChanges={false}
+                        />
+                    )}
                 </MapView>
                 {/* OSM attribution (required) */}
                 <View style={styles.attribution} pointerEvents="none">

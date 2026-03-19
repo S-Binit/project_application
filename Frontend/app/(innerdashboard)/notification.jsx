@@ -1,21 +1,34 @@
 import {StyleSheet, View, ScrollView, RefreshControl, TouchableOpacity} from 'react-native'
 import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 
 import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
 import ThemedView from "../../components/ThemedView"
 import ThemedIonicons from '../../components/ThemedIonIcons';
+import { getUserNotifications } from '../../utils/notifications';
 
 const Notification1 = () => {
     const router = useRouter();
     const [refreshing, setRefreshing] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+
+    const loadNotifications = useCallback(async () => {
+        const items = await getUserNotifications();
+        setNotifications(items);
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadNotifications();
+        }, [loadNotifications])
+    );
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
-        // Simulate refresh work; replace with real data fetch if needed
-        setTimeout(() => setRefreshing(false), 800);
-    }, []);
+        loadNotifications().finally(() => setRefreshing(false));
+    }, [loadNotifications]);
 
     return (
         <View style={styles.container}>
@@ -56,12 +69,22 @@ const Notification1 = () => {
                         />
                     }>
                     
-                    {/* Add news content here */}
-                    {[...Array(15)].map((_, i) => (
-                        <View key={i} style={styles.newsCard}>
-                            <Spacer height={5}/>
-                            <ThemedText style={styles.newsTitle}>Notification Alert!</ThemedText>
-                            <Spacer height={5}/>
+                    {notifications.length === 0 && (
+                        <View style={styles.emptyCard}>
+                            <ThemedText style={styles.emptyTitle}>No notifications yet</ThemedText>
+                            <ThemedText style={styles.emptyDesc}>You will see an alert here when a driver is near your area.</ThemedText>
+                        </View>
+                    )}
+
+                    {notifications.map((item) => (
+                        <View key={item.id} style={styles.newsCard}>
+                            <ThemedText style={styles.newsTitle}>{item.title || 'Notification'}</ThemedText>
+                            <Spacer height={6}/>
+                            <ThemedText style={styles.newsDescription}>{item.message}</ThemedText>
+                            <Spacer height={6}/>
+                            <ThemedText style={styles.newsItem}>
+                                {item.createdAt ? new Date(item.createdAt).toLocaleString() : ''}
+                            </ThemedText>
                         </View>
                     ))}
 
@@ -122,10 +145,27 @@ const styles = StyleSheet.create({
     newsDescription: {
         fontSize: 14,
         lineHeight: 20,
+        color: '#3a3a3a',
     },
     newsItem: {
-        fontSize: 16,
+        fontSize: 12,
+        color: '#777',
+    },
+    emptyCard: {
+        backgroundColor: '#ffffff',
+        borderRadius: 18,
+        padding: 18,
+        alignItems: 'center',
+    },
+    emptyTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    emptyDesc: {
+        marginTop: 8,
+        fontSize: 14,
         textAlign: 'center',
+        color: '#5f5f5f',
     },
     backButton:{
         padding: 6,

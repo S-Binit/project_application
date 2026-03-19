@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { StyleSheet, View, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, StatusBar, Platform, FlatList, Alert } from 'react-native'
+import { StyleSheet, View, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, StatusBar, Platform, FlatList, Alert, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Ionicons } from '@expo/vector-icons'
@@ -14,7 +14,7 @@ const MyFeedback = () => {
   const [feedbacks, setFeedbacks] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [filterType, setFilterType] = useState('all')
+  const [filterType, setFilterType] = useState('complaint')
 
   const fetchMyFeedback = async () => {
     try {
@@ -32,10 +32,10 @@ const MyFeedback = () => {
       if (data.success) {
         setFeedbacks(data.feedbacks || [])
       } else {
-        Alert.alert('Error', data.message || 'Failed to fetch feedback')
+        Alert.alert('Error', data.message || 'Failed to fetch reports')
       }
     } catch (error) {
-      console.error('Fetch feedback error:', error)
+      console.error('Fetch report error:', error)
       Alert.alert('Error', 'Cannot connect to server')
     } finally {
       setLoading(false)
@@ -53,8 +53,7 @@ const MyFeedback = () => {
   }
 
   const getFilteredFeedback = () => {
-    if (filterType === 'all') return feedbacks
-    return feedbacks.filter(f => f.type === filterType)
+    return feedbacks.filter(f => f.type === 'complaint')
   }
 
   const getStatusColor = (status) => {
@@ -72,7 +71,7 @@ const MyFeedback = () => {
 
   const handleDeleteFeedback = (feedbackId, subject) => {
     Alert.alert(
-      'Delete Feedback',
+      'Delete Report',
       `Are you sure you want to delete "${subject}"?`,
       [
         { text: 'Cancel', style: 'cancel' },
@@ -92,13 +91,13 @@ const MyFeedback = () => {
               const data = await response.json()
 
               if (data.success) {
-                Alert.alert('Success', 'Feedback deleted')
+                Alert.alert('Success', 'Report deleted')
                 fetchMyFeedback()
               } else {
                 Alert.alert('Error', data.message || 'Failed to delete')
               }
             } catch (error) {
-              console.error('Delete error:', error)
+              console.error('Delete report error:', error)
               Alert.alert('Error', 'Cannot connect to server')
             }
           },
@@ -111,11 +110,21 @@ const MyFeedback = () => {
     <View style={styles.feedbackCard}>
       <View style={styles.cardHeader}>
         <View style={styles.titleRow}>
-          <View style={[styles.typeBadge, item.type === 'complaint' ? styles.badgeComplaint : styles.badgeFeedback]}>
+          <View style={[styles.typeBadge, styles.badgeComplaint]}>
             <ThemedText style={styles.typeBadgeText}>
-              {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+              Complaint
             </ThemedText>
           </View>
+          {item.priority === 'high' && (
+            <View style={styles.priorityBadge}>
+              <ThemedText style={styles.priorityBadgeText}>High Priority</ThemedText>
+            </View>
+          )}
+          {item.isMissedPickup && (
+            <View style={styles.missedBadge}>
+              <ThemedText style={styles.missedBadgeText}>Missed Pickup</ThemedText>
+            </View>
+          )}
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
             <ThemedText style={styles.statusBadgeText}>
               {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
@@ -133,17 +142,14 @@ const MyFeedback = () => {
       <ThemedText style={styles.subject}>{item.subject}</ThemedText>
       <ThemedText style={styles.message}>{item.message}</ThemedText>
 
-      {item.type === 'feedback' && item.rating && (
-        <View style={styles.ratingRow}>
-          {[...Array(5)].map((_, i) => (
-            <Ionicons
-              key={i}
-              name={i < item.rating ? 'star' : 'star-outline'}
-              size={16}
-              color={i < item.rating ? '#FFD700' : '#ccc'}
-            />
-          ))}
-        </View>
+      {item.location?.latitude && item.location?.longitude && (
+        <ThemedText style={styles.locationText}>
+          Location: {item.location.latitude.toFixed(5)}, {item.location.longitude.toFixed(5)}
+        </ThemedText>
+      )}
+
+      {item.photoUrl && (
+        <Image source={{ uri: item.photoUrl }} style={styles.photoPreview} resizeMode="cover" />
       )}
 
       <ThemedText style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</ThemedText>
@@ -174,7 +180,7 @@ const MyFeedback = () => {
       <ThemedView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4CAF50" />
-          <ThemedText style={styles.loadingText}>Loading your feedback...</ThemedText>
+          <ThemedText style={styles.loadingText}>Loading your reports...</ThemedText>
         </View>
       </ThemedView>
     )
@@ -189,7 +195,7 @@ const MyFeedback = () => {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={28} color="#000" />
         </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>My Feedback</ThemedText>
+        <ThemedText style={styles.headerTitle}>My Report</ThemedText>
         <View style={{ width: 28 }} />
       </View>
 
@@ -197,19 +203,9 @@ const MyFeedback = () => {
       <View style={styles.filterContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
           <TouchableOpacity
-            style={[styles.filterButton, filterType === 'all' && styles.filterButtonActive]}
-            onPress={() => setFilterType('all')}>
-            <ThemedText style={[styles.filterButtonText, filterType === 'all' && styles.filterButtonTextActive]}>All</ThemedText>
-          </TouchableOpacity>
-          <TouchableOpacity
             style={[styles.filterButton, filterType === 'complaint' && styles.filterButtonActive]}
             onPress={() => setFilterType('complaint')}>
             <ThemedText style={[styles.filterButtonText, filterType === 'complaint' && styles.filterButtonTextActive]}>Complaints</ThemedText>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterButton, filterType === 'feedback' && styles.filterButtonActive]}
-            onPress={() => setFilterType('feedback')}>
-            <ThemedText style={[styles.filterButtonText, filterType === 'feedback' && styles.filterButtonTextActive]}>Feedback</ThemedText>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -218,13 +214,7 @@ const MyFeedback = () => {
       {filteredData.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="chatbubbles-outline" size={64} color="#ccc" />
-          <ThemedText style={styles.emptyText}>
-            {filterType === 'feedback'
-              ? 'No feedbacks'
-              : filterType === 'complaint'
-              ? 'No complaints'
-              : 'No complaints or feedbacks'}
-          </ThemedText>
+          <ThemedText style={styles.emptyText}>No complaints</ThemedText>
         </View>
       ) : (
         <FlatList
@@ -338,6 +328,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
+  priorityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    backgroundColor: '#ffebee',
+  },
+  priorityBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#b71c1c',
+  },
+  missedBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    backgroundColor: '#fff3e0',
+  },
+  missedBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#e65100',
+  },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -358,6 +370,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
     lineHeight: 18,
+    marginBottom: 10,
+  },
+  locationText: {
+    fontSize: 12,
+    color: '#555',
+    marginBottom: 8,
+  },
+  photoPreview: {
+    width: '100%',
+    height: 140,
+    borderRadius: 8,
     marginBottom: 10,
   },
   ratingRow: {

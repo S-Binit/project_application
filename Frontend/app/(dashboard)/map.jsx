@@ -1,11 +1,17 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
-import {StyleSheet, View, Animated} from 'react-native'
+import {StyleSheet, View, Animated, Alert} from 'react-native'
 import Constants from 'expo-constants'
 import MapView, {Marker, AnimatedRegion, UrlTile} from 'react-native-maps'
 import * as Location from 'expo-location'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import ThemedView from "../../components/ThemedView"
 import {LOCATION_URL} from "../../constants/API"
+import { createSocketClient } from '../../utils/socket'
+import {
+    addUserNotification,
+    removeDriverNotifications,
+} from '../../utils/notifications'
 
 const TILE_URL = Constants?.expoConfig?.extra?.TILE_URL
 const TILE_USER_AGENT = Constants?.expoConfig?.extra?.TILE_USER_AGENT
@@ -20,22 +26,40 @@ const DEFAULT_REGION = {
     longitudeDelta: 0.6,
 }
 
-// Faster update interval for real-time tracking
-const UPDATE_INTERVAL = 1500 // 1.5 seconds instead of 5 seconds
+const NEARBY_DISTANCE_METERS = 1500
+
+const toRadians = (value) => (value * Math.PI) / 180
+
+const getDistanceInMeters = (from, to) => {
+    const earthRadius = 6371000
+    const deltaLat = toRadians(to.latitude - from.latitude)
+    const deltaLon = toRadians(to.longitude - from.longitude)
+    const lat1 = toRadians(from.latitude)
+    const lat2 = toRadians(to.latitude)
+
+    const a =
+        Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+        Math.cos(lat1) * Math.cos(lat2) *
+        Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2)
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return earthRadius * c
+}
 
 const Map1 = () => {
     const [region, setRegion] = useState(DEFAULT_REGION)
     const [drivers, setDrivers] = useState([])
     const [userLocation, setUserLocation] = useState(null)
     const [error, setError] = useState(null)
-    const [initialLoad, setInitialLoad] = useState(true)
     const mapRef = useRef(null)
     const locationWatcherRef = useRef(null)
+    const socketRef = useRef(null)
+    const nearDriversRef = useRef(new Set())
+    const [etaInfo, setEtaInfo] = useState(null)
 
-    // Real-time driver location fetching with faster updates
+    // Load initial data and subscribe to live driver updates over sockets.
     useEffect(() => {
         let isMounted = true
-        let fetchCount = 0
 
         const loadDriverLocation = async () => {
             try {
@@ -51,7 +75,6 @@ const Map1 = () => {
 
                 if (data?.sharing && Array.isArray(data.drivers)) {
                     setDrivers(prev => {
-                        // Only update if data actually changed
                         if (JSON.stringify(prev) === JSON.stringify(data.drivers)) {
                             return prev
                         }
@@ -62,25 +85,45 @@ const Map1 = () => {
                 } else {
                     setDrivers([])
                 }
-                
-                fetchCount++
             } catch (_err) {
                 if (!isMounted) return
                 setError('Unable to load driver location right now.')
             }
         }
 
-        // Load immediately
+        const connectSocket = async () => {
+            const token = await AsyncStorage.getItem('token')
+            const socket = createSocketClient(token)
+            socketRef.current = socket
+
+            socket.on('connect', () => {
+                if (!isMounted) return
+                setError(null)
+            })
+
+            socket.on('drivers:update', (payload) => {
+                if (!isMounted) return
+                if (payload?.sharing && Array.isArray(payload.drivers)) {
+                    setDrivers(payload.drivers)
+                } else {
+                    setDrivers([])
+                }
+            })
+
+            socket.on('connect_error', () => {
+                if (!isMounted) return
+                setError('Realtime connection lost. Showing latest known data.')
+            })
+        }
+
         loadDriverLocation()
-        
-        // Set up faster polling interval
-        const intervalId = setInterval(loadDriverLocation, UPDATE_INTERVAL)
+        connectSocket()
 
         return () => {
             isMounted = false
-            clearInterval(intervalId)
+            socketRef.current?.disconnect()
         }
-    }, [initialLoad])
+    }, [])
 
     // Continuous real-time user location tracking
     useEffect(() => {
@@ -150,9 +193,149 @@ const Map1 = () => {
         return Array.from(deduped.values())
     }, [drivers])
 
+    const nearestDriver = useMemo(() => {
+        if (!userLocation || driverMarkers.length === 0) return null
+
+        let nearest = null
+        for (const marker of driverMarkers) {
+            const distance = getDistanceInMeters(userLocation, marker.coordinate)
+            if (!nearest || distance < nearest.distanceMeters) {
+                nearest = {
+                    driverId: marker.key,
+                    driverName: marker.title.replace('Driver: ', ''),
+                    distanceMeters: distance,
+                }
+            }
+        }
+
+        return nearest
+    }, [userLocation, driverMarkers])
+
+    useEffect(() => {
+        let isMounted = true
+        let intervalId = null
+
+        const fetchEta = async () => {
+            if (!nearestDriver || !userLocation) {
+                if (isMounted) setEtaInfo(null)
+                return
+            }
+
+            try {
+                const response = await fetch(
+                    `${LOCATION_URL}/eta?driverId=${encodeURIComponent(nearestDriver.driverId)}&userLat=${encodeURIComponent(userLocation.latitude)}&userLng=${encodeURIComponent(userLocation.longitude)}`
+                )
+                const data = await response.json()
+
+                if (!isMounted) return
+
+                if (response.ok && data?.success) {
+                    setEtaInfo({
+                        driverId: data.driverId,
+                        driverName: data.driverName || nearestDriver.driverName,
+                        etaMinutes: data.etaMinutes,
+                        distanceKm: data.distanceKm,
+                        updatedAt: data.updatedAt,
+                    })
+                } else {
+                    setEtaInfo(null)
+                }
+            } catch (_error) {
+                if (isMounted) setEtaInfo(null)
+            }
+        }
+
+        fetchEta()
+        intervalId = setInterval(fetchEta, 15000)
+
+        return () => {
+            isMounted = false
+            if (intervalId) clearInterval(intervalId)
+        }
+    }, [nearestDriver?.driverId, userLocation?.latitude, userLocation?.longitude])
+
+    useEffect(() => {
+        const syncStoppedSharingDrivers = async () => {
+            const activeDriverIds = new Set(driverMarkers.map(marker => marker.key))
+            const previouslyNearIds = Array.from(nearDriversRef.current)
+            const stoppedDriverIds = previouslyNearIds.filter(id => !activeDriverIds.has(id))
+
+            if (stoppedDriverIds.length > 0) {
+                await removeDriverNotifications(stoppedDriverIds)
+            }
+
+            nearDriversRef.current = new Set(
+                previouslyNearIds.filter(id => activeDriverIds.has(id))
+            )
+        }
+
+        syncStoppedSharingDrivers()
+    }, [driverMarkers])
+
+    useEffect(() => {
+        let isMounted = true
+
+        const notifyWhenDriverIsNearby = async () => {
+            if (!userLocation) return
+
+            if (driverMarkers.length === 0) {
+                nearDriversRef.current = new Set()
+                return
+            }
+
+            const currentNearDrivers = new Set()
+
+            for (const marker of driverMarkers) {
+                const distance = getDistanceInMeters(userLocation, marker.coordinate)
+                if (distance > NEARBY_DISTANCE_METERS) {
+                    continue
+                }
+
+                currentNearDrivers.add(marker.key)
+
+                if (nearDriversRef.current.has(marker.key)) {
+                    continue
+                }
+
+                const message = `${marker.title.replace('Driver: ', '')} is near your area (${Math.round(distance)}m away).`
+                const notification = {
+                    id: `${marker.key}-${Date.now()}`,
+                    title: 'Driver Nearby',
+                    message,
+                    driverId: marker.key,
+                    createdAt: Date.now(),
+                }
+
+                await addUserNotification(notification)
+
+                if (isMounted) {
+                    Alert.alert('Driver Nearby', message)
+                }
+            }
+
+            nearDriversRef.current = currentNearDrivers
+        }
+
+        notifyWhenDriverIsNearby()
+
+        return () => {
+            isMounted = false
+        }
+    }, [userLocation, driverMarkers])
+
     return (
         <ThemedView style={styles.container}>
             <View style={styles.mapWrapper}>
+                {etaInfo && (
+                    <View style={styles.etaBanner}>
+                        <Animated.Text style={styles.etaTitle}>
+                            {etaInfo.driverName} arriving in {etaInfo.etaMinutes} min
+                        </Animated.Text>
+                        <Animated.Text style={styles.etaMeta}>
+                            {etaInfo.distanceKm} km away
+                        </Animated.Text>
+                    </View>
+                )}
                 <MapView
                     ref={mapRef}
                     style={styles.map}
@@ -210,6 +393,27 @@ const styles = StyleSheet.create({
     },
     map: {
         flex: 1,
+    },
+    etaBanner: {
+        position: 'absolute',
+        top: 16,
+        left: 14,
+        right: 14,
+        zIndex: 10,
+        backgroundColor: 'rgba(20, 60, 28, 0.9)',
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+    },
+    etaTitle: {
+        color: '#f4fff7',
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    etaMeta: {
+        color: '#d9fbe3',
+        fontSize: 12,
+        marginTop: 2,
     },
     attribution: {
         position: 'absolute',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { StyleSheet, View, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, StatusBar, Platform, FlatList, Alert, Modal, TextInput } from 'react-native'
+import { StyleSheet, View, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, StatusBar, Platform, FlatList, Alert, Modal, TextInput, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Ionicons } from '@expo/vector-icons'
@@ -60,17 +60,20 @@ const AdminComplaints = () => {
   }
 
   const getFilteredFeedbacks = () => {
-    let filtered = feedbacks
-
-    if (filterType !== 'all') {
-      filtered = filtered.filter(f => f.type === filterType)
-    }
+    let filtered = feedbacks.filter(f => f.type === 'complaint')
 
     if (filterStatus !== 'all') {
       filtered = filtered.filter(f => f.status === filterStatus)
     }
 
-    return filtered
+    return filtered.sort((a, b) => {
+      const aPriority = a.priority === 'high' ? 1 : 0
+      const bPriority = b.priority === 'high' ? 1 : 0
+      if (aPriority !== bPriority) {
+        return bPriority - aPriority
+      }
+      return new Date(b.createdAt) - new Date(a.createdAt)
+    })
   }
 
   const handleUpdateStatus = async () => {
@@ -165,6 +168,16 @@ const AdminComplaints = () => {
               {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
             </ThemedText>
           </View>
+          {item.priority === 'high' && (
+            <View style={styles.priorityBadge}>
+              <ThemedText style={styles.priorityBadgeText}>High Priority</ThemedText>
+            </View>
+          )}
+          {item.isMissedPickup && (
+            <View style={styles.missedBadge}>
+              <ThemedText style={styles.missedBadgeText}>Missed Pickup</ThemedText>
+            </View>
+          )}
           <View style={[styles.statusBadge, item.status === 'pending' ? styles.statusPending : item.status === 'reviewed' ? styles.statusReviewed : styles.statusResolved]}>
             <ThemedText style={styles.statusBadgeText}>
               {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
@@ -224,7 +237,7 @@ const AdminComplaints = () => {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={28} color="#000" />
         </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>Complaints & Feedback</ThemedText>
+        <ThemedText style={styles.headerTitle}>Complaints</ThemedText>
         <View style={{ width: 28 }} />
       </View>
 
@@ -232,22 +245,10 @@ const AdminComplaints = () => {
       <View style={styles.filterContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
           <TouchableOpacity
-            style={[styles.filterButton, filterType === 'all' && styles.filterButtonActive]}
-            onPress={() => setFilterType('all')}>
-            <ThemedText style={[styles.filterButtonText, filterType === 'all' && styles.filterButtonTextActive]}>All</ThemedText>
-          </TouchableOpacity>
-          <TouchableOpacity
             style={[styles.filterButton, filterType === 'complaint' && styles.filterButtonActive]}
             onPress={() => setFilterType('complaint')}>
             <ThemedText style={[styles.filterButtonText, filterType === 'complaint' && styles.filterButtonTextActive]}>Complaints</ThemedText>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterButton, filterType === 'feedback' && styles.filterButtonActive]}
-            onPress={() => setFilterType('feedback')}>
-            <ThemedText style={[styles.filterButtonText, filterType === 'feedback' && styles.filterButtonTextActive]}>Feedback</ThemedText>
-          </TouchableOpacity>
-
-          <View style={styles.filterDivider} />
 
           <TouchableOpacity
             style={[styles.filterButton, filterStatus === 'all' && styles.filterButtonActive]}
@@ -277,7 +278,7 @@ const AdminComplaints = () => {
       {filteredData.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="inbox-outline" size={64} color="#ccc" />
-          <ThemedText style={styles.emptyText}>{filterType === 'complaint' ? 'No complaints' : filterType === 'feedback' ? 'No feedbacks' : 'No complaints or feedbacks'}</ThemedText>
+          <ThemedText style={styles.emptyText}>No complaints</ThemedText>
         </View>
       ) : (
         <FlatList
@@ -317,6 +318,37 @@ const AdminComplaints = () => {
 
                   <ThemedText style={styles.detailLabel}>Message</ThemedText>
                   <ThemedText style={styles.detailValue}>{selectedFeedback.message}</ThemedText>
+
+                  {selectedFeedback.location?.latitude && selectedFeedback.location?.longitude && (
+                    <>
+                      <ThemedText style={styles.detailLabel}>Location</ThemedText>
+                      <ThemedText style={styles.detailValue}>
+                        {selectedFeedback.location.latitude.toFixed(5)}, {selectedFeedback.location.longitude.toFixed(5)}
+                      </ThemedText>
+                      <TouchableOpacity
+                        style={styles.mapLinkBtn}
+                        onPress={() => {
+                          router.push({
+                            pathname: '/(admin)/map',
+                            params: {
+                              complaintLat: String(selectedFeedback.location.latitude),
+                              complaintLng: String(selectedFeedback.location.longitude),
+                              complaintLabel: selectedFeedback.subject || 'Complaint Location',
+                            },
+                          })
+                          setModalVisible(false)
+                        }}>
+                        <ThemedText style={styles.mapLinkText}>Open in App Map</ThemedText>
+                      </TouchableOpacity>
+                    </>
+                  )}
+
+                  {selectedFeedback.photoUrl && (
+                    <>
+                      <ThemedText style={styles.detailLabel}>Photo Evidence</ThemedText>
+                      <Image source={{ uri: selectedFeedback.photoUrl }} style={styles.detailImage} resizeMode="cover" />
+                    </>
+                  )}
 
                   {selectedFeedback.type === 'feedback' && selectedFeedback.rating && (
                     <>
@@ -484,6 +516,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
+  priorityBadge: {
+    backgroundColor: '#ffebee',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  priorityBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#b71c1c',
+  },
+  missedBadge: {
+    backgroundColor: '#fff3e0',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  missedBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#e65100',
+  },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -593,6 +647,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#333',
     lineHeight: 18,
+  },
+  detailImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 10,
+    marginVertical: 8,
+  },
+  mapLinkBtn: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#1976D2',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginTop: 6,
+  },
+  mapLinkText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   statusSelectContainer: {
     flexDirection: 'row',

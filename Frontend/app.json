@@ -14,7 +14,11 @@
                                 "backgroundColor":  "#ffffff"
                             },
                  "ios":  {
-                             "supportsTablet":  true
+                                                         "supportsTablet":  true,
+                                                         "infoPlist": {
+                                                             "NSLocationWhenInUseUsageDescription": "This app uses your location to share live driver position and route updates.",
+                                                             "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses your location to share live driver position and route updates."
+                                                         }
                          },
                  "android":  {
                                  "adaptiveIcon":  {
@@ -32,7 +36,13 @@
                               "TILE_USER_AGENT": "project-app/1.0 (contact: you@example.com)"
                          },
                  "plugins":  [
-                                 "expo-router"
+                                                                 "expo-router",
+                                                                 [
+                                                                     "expo-location",
+                                                                     {
+                                                                         "locationWhenInUsePermission": "Allow location access to share your live driver route and ETA."
+                                                                     }
+                                                                 ]
                              ]
              }
 }

@@ -33,5 +33,6 @@ const limits = {
 }
 
 const uploadScheduleImage = multer({ storage, fileFilter, limits })
+const uploadFeedbackImage = multer({ storage, fileFilter, limits })
 
-module.exports = { uploadScheduleImage }
+module.exports = { uploadScheduleImage, uploadFeedbackImage }

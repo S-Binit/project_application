@@ -154,14 +154,12 @@ const Profile1 = () => {
                             />
                             <View style={styles.rightTextContainer}>
                                 <ThemedText style={styles.complaintsText}>Complaints</ThemedText>
-                                <ThemedText style={styles.middleText}>and</ThemedText>
-                                <ThemedText style={styles.feedbacksText}>Feedbacks</ThemedText>
                             </View>
                         </View>
                         <TouchableOpacity 
                             style={styles.reportButton}
                             onPress={() => router.push('/(innerdashboard)/complaints')}>
-                            <ThemedText style={styles.reportButtonText}>See complaints and feedback →</ThemedText>
+                            <ThemedText style={styles.reportButtonText}>See complaints →</ThemedText>
                         </TouchableOpacity>
                     </View>
 
@@ -172,6 +170,15 @@ const Profile1 = () => {
                         style={styles.driverManagementButton}
                         onPress={() => router.push('/(admin)/drivermanagement')}>
                         <ThemedText style={styles.driverManagementText}>Driver Management</ThemedText>
+                    </TouchableOpacity>
+
+                    <Spacer height={14}/>
+
+                    {/* Live Operations Board Button */}
+                    <TouchableOpacity
+                        style={styles.driverManagementButton}
+                        onPress={() => router.push('/(admin)/admindash')}>
+                        <ThemedText style={styles.driverManagementText}>Live Operations Board</ThemedText>
                     </TouchableOpacity>
                     
                     {/* Add more content here to test scrolling */}
