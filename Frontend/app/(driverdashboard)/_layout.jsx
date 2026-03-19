@@ -1,11 +1,14 @@
-import { Stack, useRouter } from "expo-router"
-import { ActivityIndicator, View } from "react-native"
+import { Tabs, useRouter } from "expo-router"
+import { ActivityIndicator, View, useColorScheme } from "react-native"
 import { useEffect, useState } from "react"
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ColorsDriver } from "../../constants/ColorsDriver"
+import { Ionicons } from '@expo/vector-icons'
 
 const DashboardLayout = () => {
     const router = useRouter()
+    const colorScheme = useColorScheme()
+    const theme = ColorsDriver[colorScheme] ?? ColorsDriver.light
     const [isLoading, setIsLoading] = useState(true)
     const [isAuthenticated, setIsAuthenticated] = useState(false)
 
@@ -44,11 +47,58 @@ const DashboardLayout = () => {
         return null
     }
 
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="map" />
-    </Stack>      
-  )
+    return (
+        <Tabs
+            screenOptions={{
+                headerShown: false,
+                tabBarStyle: {
+                    backgroundColor: theme.navBackground,
+                    paddingTop: 10,
+                    height: 90,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -3 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 3,
+                    elevation: 5,
+                },
+                tabBarActiveTintColor: theme.iconColorFocused,
+                tabBarInactiveTintColor: theme.iconColor,
+            }}
+        >
+            <Tabs.Screen
+                name="map"
+                options={{
+                    title: 'Map',
+                    tabBarIcon: ({ focused }) => (
+                        <Ionicons
+                            size={24}
+                            name={focused ? 'map' : 'map-outline'}
+                            color={focused ? theme.iconColorFocused : theme.iconColor}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="news"
+                options={{
+                    title: 'News',
+                    tabBarIcon: ({ focused }) => (
+                        <Ionicons
+                            size={24}
+                            name={focused ? 'newspaper' : 'newspaper-outline'}
+                            color={focused ? theme.iconColorFocused : theme.iconColor}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="schedule"
+                options={{
+                    href: null,
+                }}
+            />
+        </Tabs>
+    )
 }
 
 export default DashboardLayout
