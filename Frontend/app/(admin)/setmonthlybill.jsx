@@ -133,7 +133,7 @@ const SetMonthlyBill = () => {
 
             <View style={styles.switchRow}>
               <View style={{ flex: 1 }}>
-                <ThemedText style={styles.switchTitle}>Apply to current pending bills</ThemedText>
+                <ThemedText style={styles.switchTitle}>Apply to all pending bills</ThemedText>
                 <ThemedText style={styles.switchHint}>Updates pending bills for this month only.</ThemedText>
               </View>
               <Switch
