@@ -138,10 +138,15 @@ const AdminDashHome = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <ThemedText style={styles.headerTitle}>Live Operations Board</ThemedText>
-        <View style={styles.connectionRow}>
-          <View style={[styles.connectionDot, { backgroundColor: connectionColor }]} />
-          <ThemedText style={styles.connectionText}>{connectionLabel}</ThemedText>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={28} color="#000" />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <ThemedText style={styles.headerTitle}>Live Operations Board</ThemedText>
+          <View style={styles.connectionRow}>
+            <View style={[styles.connectionDot, { backgroundColor: connectionColor }]} />
+            <ThemedText style={styles.connectionText}>{connectionLabel}</ThemedText>
+          </View>
         </View>
       </View>
 
@@ -265,12 +270,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     paddingHorizontal: 15,
     paddingVertical: 12,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 10 : 10,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 10 : 25,
     backgroundColor: '#fff',
     borderBottomWidth: 0.5,
     borderBottomColor: '#ddd',
+    gap: 12,
+  },
+  headerContent: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: 22,

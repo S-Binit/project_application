@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 15,
     paddingVertical: 12,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 10 : (StatusBar.currentHeight || 0) + 40,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 10 : 25,
     backgroundColor: '#fff',
     borderBottomWidth: 0.5,
     borderBottomColor: '#ddd',
