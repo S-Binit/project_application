@@ -569,9 +569,8 @@ exports.updateAdminMonthlyBillSettings = async (req, res) => {
 
     let updatedPendingBills = 0
     if (applyToPendingBills) {
-      const currentMonth = getBillingMonthLabel(new Date())
       const updateResult = await Bill.updateMany(
-        { status: 'pending', billingMonth: currentMonth },
+        { status: 'pending' },
         { $set: { amount: monthlyAmount } }
       )
       updatedPendingBills = Number(updateResult?.modifiedCount || 0)
