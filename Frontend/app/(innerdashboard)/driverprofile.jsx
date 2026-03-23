@@ -71,7 +71,9 @@ const Profile2 = () => {
                 <Spacer height={12} />
 
                 <View style={styles.actionsRow}>
-                <Pressable style={({pressed}) => [styles.actionButton, pressed && {opacity: 0.6}]} onPress={() => {}}>
+                <Pressable
+                    style={({pressed}) => [styles.actionButton, pressed && {opacity: 0.6}]}
+                    onPress={() => router.push('/(innerdashboard)/myinformation')}>
                     <Ionicons name="person-outline" size={20} color="#2c3330" style={styles.actionIcon} />
                     <ThemedText style={styles.actionText}>My Information</ThemedText>
                 </Pressable>
@@ -90,7 +92,9 @@ const Profile2 = () => {
             <Spacer height={12} />
 
             <View style={styles.actionsRow}>
-                <Pressable style={({pressed}) => [styles.actionButton, pressed && {opacity: 0.6}]} onPress={() => {}}>
+                <Pressable
+                    style={({pressed}) => [styles.actionButton, pressed && {opacity: 0.6}]}
+                    onPress={() => router.push('/(innerdashboard)/changepassword')}>
                     <Ionicons name="key-outline" size={20} color="#2c3330" style={styles.actionIcon} />
                     <ThemedText style={styles.actionText}>Change Password</ThemedText>
                 </Pressable>
@@ -114,11 +118,15 @@ const Profile2 = () => {
             <Spacer height={12} />
 
             <View style={styles.actionsRow}>
-                <Pressable style={({pressed}) => [styles.actionButton, pressed && {opacity: 0.6}]} onPress={() => {}}>
+                <Pressable
+                    style={({pressed}) => [styles.actionButton, pressed && {opacity: 0.6}]}
+                    onPress={() => router.push('/(innerdashboard)/faq')}>
                     <Ionicons name="help-circle-outline" size={20} color="#2c3330" style={styles.actionIcon} />
                     <ThemedText style={styles.actionText}>FAQ</ThemedText>
                 </Pressable>
-                <Pressable style={({pressed}) => [styles.actionButton, pressed && {opacity: 0.6}]} onPress={() => {}}>
+                <Pressable
+                    style={({pressed}) => [styles.actionButton, pressed && {opacity: 0.6}]}
+                    onPress={() => router.push('/(innerdashboard)/policies')}>
                     <Ionicons name="document-text-outline" size={20} color="#2c3330" style={styles.actionIcon} />
                     <ThemedText style={styles.actionText}>Policies</ThemedText>
                 </Pressable>
@@ -205,7 +213,7 @@ const Profile2 = () => {
                                 style={({pressed}) => [styles.modalButton, styles.modalButtonConfirm, pressed && {backgroundColor: 'rgba(197, 22, 16, 0.85)'}]}
                                 onPress={async () => {
                                     try {
-                                        await AsyncStorage.multiRemove(['token','userRole','userId','userName']);
+                                        await AsyncStorage.multiRemove(['token','userRole','userId','userName','userEmail']);
                                     } catch {}
                                     setLogoutModalVisible(false);
                                     router.dismissAll();
@@ -243,7 +251,7 @@ const Profile2 = () => {
                                 style={({pressed}) => [styles.modalButton, styles.modalButtonConfirm, pressed && {backgroundColor: 'rgba(197, 22, 16, 0.85)'}]}
                                 onPress={async () => {
                                     try {
-                                        await AsyncStorage.multiRemove(['token','userRole','userId','userName']);
+                                        await AsyncStorage.multiRemove(['token','userRole','userId','userName','userEmail']);
                                     } catch {}
                                     setDeleteModalVisible(false);
                                     router.dismissAll();

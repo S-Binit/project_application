@@ -150,3 +150,50 @@ exports.adminLogin = async (req, res) => {
   }
 }
 
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current password and new password are required' })
+    }
+
+    if (!validatePassword(newPassword)) {
+      return res.status(400).json({ message: `New password must be at least ${MIN_PASSWORD_LENGTH} characters` })
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ message: 'New password must be different from current password' })
+    }
+
+    const roleToModel = {
+      user: User,
+      driver: Driver,
+      admin: Admin,
+    }
+
+    const Model = roleToModel[req.user?.role]
+    if (!Model) {
+      return res.status(400).json({ message: 'Unsupported user role' })
+    }
+
+    const account = await Model.findById(req.user.id)
+    if (!account) {
+      return res.status(404).json({ message: 'Account not found' })
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, account.password)
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({ message: 'Current password is incorrect' })
+    }
+
+    account.password = await bcrypt.hash(newPassword, 10)
+    await account.save()
+
+    res.json({ success: true, message: 'Password changed successfully' })
+  } catch (error) {
+    console.error('Change password error:', error.message)
+    res.status(500).json({ message: 'Password change failed' })
+  }
+}
+

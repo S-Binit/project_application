@@ -333,7 +333,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingVertical: 15,
         backgroundColor: 'inherit',
-        borderBottomColor: 'rgba(0,0,0,0.1)',
+        borderBottomColor: 'rgba(0,0,0,0.08)',
+        borderBottomWidth: 1,
         backgroundColor: '#f0f7f5ff',
     },
     heading:{

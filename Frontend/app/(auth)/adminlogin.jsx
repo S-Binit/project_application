@@ -68,6 +68,7 @@ const AdminLogin = () => {
                 await AsyncStorage.setItem('userRole', data.user.role);
                 await AsyncStorage.setItem('userId', data.user.id);
                 await AsyncStorage.setItem('userName', data.user.name || '');
+                await AsyncStorage.setItem('userEmail', data.user.email || '');
                 
                 // Navigate to admin dashboard
                 router.dismissAll();
