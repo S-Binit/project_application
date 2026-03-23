@@ -88,13 +88,6 @@ const Profile1 = () => {
 
                 <View style={styles.headerActions}>
                     <TouchableOpacity
-                        onPress={()=>router.push('/(innerdashboard)/notification')}
-                        style={styles.notifButton}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                        <ThemedIonicons name="notifications-outline" size={26}/>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
                         onPress={()=>router.push('/(innerdashboard)/profile')}
                         style={styles.profileButton}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -237,11 +230,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 15,
 
-    },
-    notifButton:{
-        padding: 8,
-        borderRadius: 20,
-        backgroundColor: 'transparent',
     },
     profileButton:{
         padding: 8,
