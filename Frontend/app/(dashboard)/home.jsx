@@ -1,4 +1,4 @@
-import {StyleSheet, TouchableOpacity, View, ScrollView, Platform, StatusBar, RefreshControl, Image, Modal, TextInput, Alert} from 'react-native'
+import {StyleSheet, TouchableOpacity, View, ScrollView, Platform, StatusBar, RefreshControl, Image, Modal, TextInput, Alert, KeyboardAvoidingView} from 'react-native'
 import { Ionicons} from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useState, useEffect } from 'react';
@@ -379,7 +379,10 @@ const Profile1 = () => {
                 transparent={true}
                 animationType="slide"
                 onRequestClose={() => setFeedbackModalVisible(false)}>
-                <View style={styles.modalContainer}>
+                <KeyboardAvoidingView 
+                    style={styles.modalContainer} 
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={0}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
                             <ThemedText style={styles.modalTitle}>Submit Complaint</ThemedText>
@@ -391,41 +394,43 @@ const Profile1 = () => {
                         </View>
                         
 
-                        {/* Subject Input */}
-                        <ThemedText style={styles.inputLabel}>Subject</ThemedText>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter subject"
-                            placeholderTextColor="#999"
-                            value={feedbackSubject}
-                            onChangeText={setFeedbackSubject}
-                            maxLength={100}
-                        />
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            {/* Subject Input */}
+                            <ThemedText style={styles.inputLabel}>Subject</ThemedText>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter subject"
+                                placeholderTextColor="#999"
+                                value={feedbackSubject}
+                                onChangeText={setFeedbackSubject}
+                                maxLength={100}
+                            />
 
-                        {/* Message Input */}
-                        <ThemedText style={styles.inputLabel}>Message</ThemedText>
-                        <TextInput
-                            style={[styles.input, styles.messageInput]}
-                            placeholder="Enter your message"
-                            placeholderTextColor="#999"
-                            value={feedbackMessage}
-                            onChangeText={setFeedbackMessage}
-                            multiline={true}
-                            numberOfLines={5}
-                            maxLength={500}
-                        />
+                            {/* Message Input */}
+                            <ThemedText style={styles.inputLabel}>Message</ThemedText>
+                            <TextInput
+                                style={[styles.input, styles.messageInput]}
+                                placeholder="Enter your message"
+                                placeholderTextColor="#999"
+                                value={feedbackMessage}
+                                onChangeText={setFeedbackMessage}
+                                multiline={true}
+                                numberOfLines={5}
+                                maxLength={500}
+                            />
 
-                        {/* Submit Button */}
-                        <TouchableOpacity
-                            style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
-                            onPress={handleSubmitFeedback}
-                            disabled={submitting}>
-                            <ThemedText style={styles.submitButtonText}>
-                                {submitting ? 'Submitting...' : 'Submit Complaint'}
-                            </ThemedText>
-                        </TouchableOpacity>
+                            {/* Submit Button */}
+                            <TouchableOpacity
+                                style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+                                onPress={handleSubmitFeedback}
+                                disabled={submitting}>
+                                <ThemedText style={styles.submitButtonText}>
+                                    {submitting ? 'Submitting...' : 'Submit Complaint'}
+                                </ThemedText>
+                            </TouchableOpacity>
+                        </ScrollView>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
 
             <Modal
@@ -433,7 +438,10 @@ const Profile1 = () => {
                 transparent={true}
                 animationType="slide"
                 onRequestClose={() => setMissedModalVisible(false)}>
-                <View style={styles.modalContainer}>
+                <KeyboardAvoidingView 
+                    style={styles.modalContainer} 
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={0}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
                             <ThemedText style={styles.modalTitle}>Missed My Area</ThemedText>
@@ -444,59 +452,61 @@ const Profile1 = () => {
                             </TouchableOpacity>
                         </View>
 
-                        <ThemedText style={styles.helperText}>Quick high-priority complaint with photo and auto location.</ThemedText>
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <ThemedText style={styles.helperText}>Quick high-priority complaint with photo and auto location.</ThemedText>
 
-                        <View style={styles.photoActionsRow}>
-                            <TouchableOpacity style={styles.photoButton} onPress={() => pickMissedPhoto('camera')}>
-                                <Ionicons name="camera" size={18} color="#fff" />
-                                <ThemedText style={styles.photoButtonText}>Take Photo</ThemedText>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.photoButton} onPress={() => pickMissedPhoto('gallery')}>
-                                <Ionicons name="images" size={18} color="#fff" />
-                                <ThemedText style={styles.photoButtonText}>Choose Photo</ThemedText>
-                            </TouchableOpacity>
-                        </View>
-
-                        {missedPhoto?.uri && (
-                            <Image source={{ uri: missedPhoto.uri }} style={styles.previewImage} resizeMode="cover" />
-                        )}
-
-                        <View style={styles.locationRow}>
-                            <View style={styles.locationTextWrap}>
-                                <ThemedText style={styles.inputLabel}>Auto Location</ThemedText>
-                                <ThemedText style={styles.locationValue}>
-                                    {missedLocation
-                                        ? `${missedLocation.latitude.toFixed(5)}, ${missedLocation.longitude.toFixed(5)}`
-                                        : 'Not captured yet'}
-                                </ThemedText>
+                            <View style={styles.photoActionsRow}>
+                                <TouchableOpacity style={styles.photoButton} onPress={() => pickMissedPhoto('camera')}>
+                                    <Ionicons name="camera" size={18} color="#fff" />
+                                    <ThemedText style={styles.photoButtonText}>Take Photo</ThemedText>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.photoButton} onPress={() => pickMissedPhoto('gallery')}>
+                                    <Ionicons name="images" size={18} color="#fff" />
+                                    <ThemedText style={styles.photoButtonText}>Choose Photo</ThemedText>
+                                </TouchableOpacity>
                             </View>
-                            <TouchableOpacity style={styles.refreshLocationBtn} onPress={fetchCurrentLocation} disabled={capturingLocation}>
-                                <Ionicons name="refresh" size={18} color="#fff" />
+
+                            {missedPhoto?.uri && (
+                                <Image source={{ uri: missedPhoto.uri }} style={styles.previewImage} resizeMode="cover" />
+                            )}
+
+                            <View style={styles.locationRow}>
+                                <View style={styles.locationTextWrap}>
+                                    <ThemedText style={styles.inputLabel}>Auto Location</ThemedText>
+                                    <ThemedText style={styles.locationValue}>
+                                        {missedLocation
+                                            ? `${missedLocation.latitude.toFixed(5)}, ${missedLocation.longitude.toFixed(5)}`
+                                            : 'Not captured yet'}
+                                    </ThemedText>
+                                </View>
+                                <TouchableOpacity style={styles.refreshLocationBtn} onPress={fetchCurrentLocation} disabled={capturingLocation}>
+                                    <Ionicons name="refresh" size={18} color="#fff" />
+                                </TouchableOpacity>
+                            </View>
+
+                            <ThemedText style={styles.inputLabel}>Message (Optional)</ThemedText>
+                            <TextInput
+                                style={[styles.input, styles.messageInput]}
+                                placeholder="Add extra detail (house landmark, street, etc.)"
+                                placeholderTextColor="#999"
+                                value={missedMessage}
+                                onChangeText={setMissedMessage}
+                                multiline={true}
+                                numberOfLines={4}
+                                maxLength={500}
+                            />
+
+                            <TouchableOpacity
+                                style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+                                onPress={handleSubmitMissedPickup}
+                                disabled={submitting || capturingLocation}>
+                                <ThemedText style={styles.submitButtonText}>
+                                    {submitting ? 'Submitting...' : 'Submit Missed Pickup'}
+                                </ThemedText>
                             </TouchableOpacity>
-                        </View>
-
-                        <ThemedText style={styles.inputLabel}>Message (Optional)</ThemedText>
-                        <TextInput
-                            style={[styles.input, styles.messageInput]}
-                            placeholder="Add extra detail (house landmark, street, etc.)"
-                            placeholderTextColor="#999"
-                            value={missedMessage}
-                            onChangeText={setMissedMessage}
-                            multiline={true}
-                            numberOfLines={4}
-                            maxLength={500}
-                        />
-
-                        <TouchableOpacity
-                            style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
-                            onPress={handleSubmitMissedPickup}
-                            disabled={submitting || capturingLocation}>
-                            <ThemedText style={styles.submitButtonText}>
-                                {submitting ? 'Submitting...' : 'Submit Missed Pickup'}
-                            </ThemedText>
-                        </TouchableOpacity>
+                        </ScrollView>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
         </View>
     )
