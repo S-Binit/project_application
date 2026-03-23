@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import {useCallback, useEffect, useRef, useState} from 'react'
-import {StyleSheet, View, TextInput, ScrollView, TouchableOpacity, Modal, FlatList} from 'react-native'
+import {StyleSheet, View, TextInput, ScrollView, TouchableOpacity, Modal, FlatList, KeyboardAvoidingView, Platform} from 'react-native'
 import Constants from 'expo-constants'
 import MapView, {Marker, UrlTile, Polyline} from 'react-native-maps'
 import * as Location from 'expo-location'
@@ -527,7 +527,10 @@ const Map2 = () => {
                         setIsSharing(false)
                     }}
                 >
-                    <View style={styles.modalOverlay}>
+                    <KeyboardAvoidingView 
+                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                        style={styles.modalOverlay}
+                    >
                         <View style={styles.modalContent}>
                             <ThemedText style={styles.modalTitle}>Enter Destination</ThemedText>
                             <TextInput
@@ -576,7 +579,7 @@ const Map2 = () => {
                                 </TouchableOpacity>
                             </View>
                         </View>
-                    </View>
+                    </KeyboardAvoidingView>
                 </Modal>
 
                 {/* Route confirmation and sharing */}
