@@ -1,6 +1,9 @@
 const User = require('../models/user')
 const Driver = require('../models/driver')
 const Admin = require('../models/admin')
+const Feedback = require('../models/feedback')
+const Bill = require('../models/bill')
+const Payment = require('../models/payment')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
@@ -194,6 +197,34 @@ exports.changePassword = async (req, res) => {
   } catch (error) {
     console.error('Change password error:', error.message)
     res.status(500).json({ message: 'Password change failed' })
+  }
+}
+
+exports.deleteOwnAccount = async (req, res) => {
+  try {
+    const { id, role } = req.user || {}
+
+    if (!id || role !== 'user') {
+      return res.status(403).json({ message: 'Only user accounts can be deleted here' })
+    }
+
+    const user = await User.findById(id)
+    if (!user) {
+      return res.status(404).json({ message: 'Account not found' })
+    }
+
+    await Promise.all([
+      Feedback.deleteMany({ userId: id }),
+      Payment.deleteMany({ userId: id }),
+      Bill.deleteMany({ userId: id }),
+    ])
+
+    await User.findByIdAndDelete(id)
+
+    res.json({ success: true, message: 'Account deleted successfully' })
+  } catch (error) {
+    console.error('Delete account error:', error.message)
+    res.status(500).json({ message: 'Failed to delete account' })
   }
 }
 

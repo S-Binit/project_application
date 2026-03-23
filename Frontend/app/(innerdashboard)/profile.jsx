@@ -1,4 +1,4 @@
-import {StyleSheet, View, TouchableOpacity, Pressable, ScrollView, Modal} from 'react-native'
+import {StyleSheet, View, TouchableOpacity, Pressable, ScrollView, Modal, Alert} from 'react-native'
 import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -8,6 +8,7 @@ import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
 import ThemedView from "../../components/ThemedView"
 import ThemedIonicons from '../../components/ThemedIonIcons'
+import { API_BASE } from '../../constants/API'
 
 const Profile1 = () => {
     const [name, setName] = useState('');
@@ -15,7 +16,46 @@ const Profile1 = () => {
     const [themeModalVisible, setThemeModalVisible] = useState(false);
     const [logoutModalVisible, setLogoutModalVisible] = useState(false);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [deletingAccount, setDeletingAccount] = useState(false);
     const router = useRouter();
+
+    const handleDeleteAccount = async () => {
+        if (deletingAccount) return;
+
+        try {
+            setDeletingAccount(true);
+            const token = await AsyncStorage.getItem('token');
+
+            if (!token) {
+                Alert.alert('Session Expired', 'Please login again.');
+                return;
+            }
+
+            const response = await fetch(`${API_BASE}/auth/me`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                Alert.alert('Delete Failed', data.message || 'Unable to delete account.');
+                return;
+            }
+
+            await AsyncStorage.multiRemove(['token','userRole','userId','userName','userEmail']);
+            setDeleteModalVisible(false);
+            router.dismissAll();
+            router.replace('/');
+        } catch (error) {
+            console.error('Delete account error:', error);
+            Alert.alert('Error', 'Cannot connect to server');
+        } finally {
+            setDeletingAccount(false);
+        }
+    };
 
     useEffect(() => {
         const loadName = async () => {
@@ -265,15 +305,9 @@ const Profile1 = () => {
 
                             <Pressable 
                                 style={({pressed}) => [styles.modalButton, styles.modalButtonConfirm, pressed && {backgroundColor: 'rgba(197, 22, 16, 0.85)'}]}
-                                onPress={async () => {
-                                    try {
-                                        await AsyncStorage.multiRemove(['token','userRole','userId','userName','userEmail']);
-                                    } catch {}
-                                    setDeleteModalVisible(false);
-                                    router.dismissAll();
-                                    router.replace('/');
-                                }}>
-                                <ThemedText style={styles.modalButtonTextConfirm}>Delete</ThemedText>
+                                onPress={handleDeleteAccount}
+                                disabled={deletingAccount}>
+                                <ThemedText style={styles.modalButtonTextConfirm}>{deletingAccount ? 'Deleting...' : 'Delete'}</ThemedText>
                             </Pressable>
                         </View>
                     </View>
