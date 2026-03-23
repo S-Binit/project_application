@@ -422,6 +422,12 @@ const Map2 = () => {
         }
     }
 
+    const handleCenterOnLocation = () => {
+        if (region && region.latitude && region.longitude && mapRef.current) {
+            mapRef.current.animateToRegion(region, 800)
+        }
+    }
+
     return (
         <ThemedViewDriver style={styles.container}>
             <View style={styles.mapWrapper}>
@@ -501,6 +507,15 @@ const Map2 = () => {
                 <View style={styles.attribution} pointerEvents="none">
                     <ThemedText style={styles.attrText}>© OpenStreetMap contributors</ThemedText>
                 </View>
+
+                {/* Center on location button */}
+                <TouchableOpacity 
+                    style={styles.centerButton}
+                    onPress={handleCenterOnLocation}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons name="locate" size={24} color="#fff" />
+                </TouchableOpacity>
 
                 {/* Destination Modal */}
                 <Modal
@@ -734,5 +749,21 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontStyle: 'italic',
         marginBottom: 8,
+    },
+    centerButton: {
+        position: 'absolute',
+        bottom: 100,
+        right: 16,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: '#2196F3',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
 })

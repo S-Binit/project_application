@@ -1,9 +1,10 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
-import {StyleSheet, View, Animated, Alert} from 'react-native'
+import {StyleSheet, View, Animated, Alert, TouchableOpacity} from 'react-native'
 import Constants from 'expo-constants'
 import MapView, {Marker, AnimatedRegion, UrlTile} from 'react-native-maps'
 import * as Location from 'expo-location'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import {Ionicons} from '@expo/vector-icons'
 
 import ThemedView from "../../components/ThemedView"
 import {LOCATION_URL} from "../../constants/API"
@@ -358,6 +359,13 @@ const Map1 = () => {
         }
     }, [userLocation, driverMarkers])
 
+    const handleCenterOnLocation = () => {
+        if (userLocation && mapRef.current) {
+            const newRegion = regionFromCoords(userLocation)
+            mapRef.current.animateToRegion(newRegion, 800)
+        }
+    }
+
     return (
         <ThemedView style={styles.container}>
             <View style={styles.mapWrapper}>
@@ -411,6 +419,14 @@ const Map1 = () => {
                 <View style={styles.attribution} pointerEvents="none">
                     <Animated.Text style={styles.attrText}>© OpenStreetMap contributors</Animated.Text>
                 </View>
+                {/* Center on location button */}
+                <TouchableOpacity 
+                    style={styles.centerButton}
+                    onPress={handleCenterOnLocation}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons name="locate" size={24} color="#fff" />
+                </TouchableOpacity>
             </View>
         </ThemedView>
     )
@@ -462,5 +478,21 @@ const styles = StyleSheet.create({
     attrText: {
         color: '#fff',
         fontSize: 11,
+    },
+    centerButton: {
+        position: 'absolute',
+        bottom: 80,
+        right: 16,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: '#2196F3',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
 })
