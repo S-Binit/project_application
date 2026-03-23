@@ -445,7 +445,7 @@ const Map2 = () => {
                     style={styles.map}
                     initialRegion={DEFAULT_REGION}
                     showsUserLocation
-                    showsMyLocationButton
+                    showsMyLocationButton={false}
                     loadingEnabled
                     tracksViewChanges={false}
                     zoomEnabled={true}

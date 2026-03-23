@@ -227,7 +227,7 @@ const Map1 = () => {
                     style={styles.map}
                     initialRegion={region}
                     showsUserLocation
-                    showsMyLocationButton
+                    showsMyLocationButton={false}
                     loadingEnabled
                     // Optimization props for smoother performance
                     moveOnMarkerPress={false}
