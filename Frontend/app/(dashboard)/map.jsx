@@ -384,7 +384,7 @@ const Map1 = () => {
                     style={styles.map}
                     initialRegion={region}
                     showsUserLocation
-                    showsMyLocationButton
+                    showsMyLocationButton={false}
                     loadingEnabled
                     // Optimization props for smoother performance
                     moveOnMarkerPress={false}
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     },
     etaBanner: {
         position: 'absolute',
-        top: 16,
+        top: 30,
         left: 14,
         right: 14,
         zIndex: 10,
