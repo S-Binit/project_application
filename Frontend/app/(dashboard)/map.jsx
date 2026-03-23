@@ -22,8 +22,8 @@ const mapTileUserAgent = TILE_USER_AGENT || 'project-app/1.0 (contact: you@examp
 const DEFAULT_REGION = {
     latitude: 37.78825,
     longitude: -122.4324,
-    latitudeDelta: 0.6,
-    longitudeDelta: 0.6,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
 }
 
 const NEARBY_DISTANCE_METERS = 1500
@@ -46,11 +46,18 @@ const getDistanceInMeters = (from, to) => {
     return earthRadius * c
 }
 
+const regionFromCoords = (coords) => ({
+    ...DEFAULT_REGION,
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+})
+
 const Map1 = () => {
     const [region, setRegion] = useState(DEFAULT_REGION)
     const [drivers, setDrivers] = useState([])
     const [userLocation, setUserLocation] = useState(null)
     const [error, setError] = useState(null)
+    const [initialCenter, setInitialCenter] = useState(true)
     const mapRef = useRef(null)
     const locationWatcherRef = useRef(null)
     const socketRef = useRef(null)
@@ -135,6 +142,22 @@ const Map1 = () => {
                 if (!isMounted) return
                 if (status !== 'granted') return
 
+                // Get initial location and center map on it
+                const lastKnown = await Location.getLastKnownPositionAsync()
+                if (isMounted && lastKnown?.coords?.latitude && lastKnown?.coords?.longitude) {
+                    const seededRegion = regionFromCoords(lastKnown.coords)
+                    setRegion(seededRegion)
+
+                    if (initialCenter) {
+                        setTimeout(() => {
+                            if (mapRef.current) {
+                                mapRef.current.animateToRegion(seededRegion, 800)
+                            }
+                        }, 300)
+                        setInitialCenter(false)
+                    }
+                }
+
                 // Use watchPositionAsync for continuous real-time updates
                 locationWatcherRef.current = await Location.watchPositionAsync(
                     {
@@ -151,6 +174,18 @@ const Map1 = () => {
                         }
                         
                         setUserLocation(coord)
+
+                        // Auto-center map on user's location when first loaded
+                        if (initialCenter) {
+                            const currentRegion = regionFromCoords(coords)
+                            setRegion(currentRegion)
+                            setTimeout(() => {
+                                if (mapRef.current) {
+                                    mapRef.current.animateToRegion(currentRegion, 1000)
+                                }
+                            }, 500)
+                            setInitialCenter(false)
+                        }
                     }
                 )
             } catch (_err) {
