@@ -6,6 +6,8 @@ import MapView, {Marker, UrlTile, Polyline} from 'react-native-maps'
 import * as Location from 'expo-location'
 import {useRouter} from 'expo-router'
 import {Ionicons} from '@expo/vector-icons'
+import { Image } from 'react-native'
+import truckIcon from '../../assets/truck.png' // adjust path if needed
 
 import ThemedButton from "../../components/ThemedButton"
 import ThemedText from "../../components/ThemedText"
@@ -444,7 +446,7 @@ const Map2 = () => {
                     ref={mapRef}
                     style={styles.map}
                     initialRegion={DEFAULT_REGION}
-                    showsUserLocation
+                    showsUserLocation={false}
                     showsMyLocationButton={false}
                     loadingEnabled
                     tracksViewChanges={false}
@@ -470,15 +472,24 @@ const Map2 = () => {
                             lineDashPattern={[10, 5]}
                         />
                     )}
-                    {hasLocation && (
-                        <Marker
-                            coordinate={region}
-                            title="Driver (you)"
-                            description={`Live driver location${isSharing ? ' • SHARING' : ''}`}
-                            pinColor={isSharing ? "#4CAF50" : "#FFA726"}
-                            tracksViewChanges={false}
-                        />
-                    )}
+         {hasLocation && (
+  <Marker
+    key={`${region.latitude}-${region.longitude}`}
+    coordinate={{
+      latitude: region.latitude,
+      longitude: region.longitude,
+    }}
+    anchor={{ x: 0.5, y: 0.5 }}
+    tracksViewChanges={true}
+  >
+    {/* ONLY the truck icon, no default pin */}
+    <Image
+      source={truckIcon}
+      style={{ width: 50, height: 50 }}
+      resizeMode="contain"
+    />
+  </Marker>
+)}
                     {destinationCoords && (
                         <Marker
                             coordinate={destinationCoords}

@@ -5,7 +5,8 @@ import MapView, {Marker, AnimatedRegion, UrlTile} from 'react-native-maps'
 import * as Location from 'expo-location'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import {Ionicons} from '@expo/vector-icons'
-
+import { Image } from 'react-native'
+import truckIcon from '../../assets/truck.png'
 import ThemedView from "../../components/ThemedView"
 import {LOCATION_URL} from "../../constants/API"
 import { createSocketClient } from '../../utils/socket'
@@ -403,17 +404,22 @@ const Map1 = () => {
                         flipY={false}
                         userAgent={mapTileUserAgent}
                     />
-                    {driverMarkers.map(marker => (
-                        <Marker
-                            key={marker.key}
-                            coordinate={marker.coordinate}
-                            title={marker.title}
-                            description={marker.description}
-                            pinColor="#d32f2f"
-                            // Optimize marker rendering
-                            tracksViewChanges={false}
-                        />
-                    ))}
+                   {driverMarkers.map(marker => (
+    <Marker
+        key={marker.key}
+        coordinate={marker.coordinate}
+        title={marker.title}
+        description={marker.description}
+        tracksViewChanges={true}  // ✅ set to true for custom images
+        anchor={{ x: 0.5, y: 0.5 }} // optional, centers image
+    >
+        <Image
+            source={truckIcon}
+            style={{ width: 30, height: 30 }}
+            resizeMode="contain"
+        />
+    </Marker>
+))}
                 </MapView>
                 {/* OSM attribution (required) */}
                 <View style={styles.attribution} pointerEvents="none">
