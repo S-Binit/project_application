@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
-import {StyleSheet, View, Animated, Alert, TouchableOpacity} from 'react-native'
+import {StyleSheet, View, Animated, Alert, TouchableOpacity, Platform} from 'react-native'
 import Constants from 'expo-constants'
 import MapView, {Marker, AnimatedRegion, UrlTile} from 'react-native-maps'
 import * as Location from 'expo-location'
@@ -29,6 +29,7 @@ const DEFAULT_REGION = {
 }
 
 const NEARBY_DISTANCE_METERS = 1500
+const DRIVER_MARKER_SIZE = Platform.OS === 'ios' ? 42 : 30
 
 const toRadians = (value) => (value * Math.PI) / 180
 
@@ -415,7 +416,7 @@ const Map1 = () => {
     >
         <Image
             source={truckIcon}
-            style={{ width: 30, height: 30 }}
+            style={{ width: DRIVER_MARKER_SIZE, height: DRIVER_MARKER_SIZE }}
             resizeMode="contain"
         />
     </Marker>
