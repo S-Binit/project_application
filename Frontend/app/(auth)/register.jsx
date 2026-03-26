@@ -22,6 +22,7 @@ const Register = () => {
     const router = useRouter();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -32,8 +33,14 @@ const Register = () => {
         setError('');
 
         // Validation
-        if (!name.trim() || !email.trim() || !password.trim()) {
+        if (!name.trim() || !email.trim() || !phoneNumber.trim() || !password.trim()) {
             setError('All fields are required');
+            return;
+        }
+
+        const normalizedPhoneNumber = phoneNumber.replace(/\s+/g, '');
+        if (!/^[0-9]{10}$/.test(normalizedPhoneNumber)) {
+            setError('Phone number must be exactly 10 digits');
             return;
         }
 
@@ -53,6 +60,7 @@ const Register = () => {
                 body: JSON.stringify({
                     name: name.trim(),
                     email: email.trim().toLowerCase(),
+                    phoneNumber: normalizedPhoneNumber,
                     password: password,
                 }),
             });
@@ -157,6 +165,21 @@ const Register = () => {
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     autoCapitalize="none"
+                />
+            </View>
+
+            <Spacer height={20} />
+
+            {/* {Phone Number Input} */}
+            <View style={styles.inputWrapper}>
+                <Ionicons name="call-outline" size={24} color="#666" style={styles.inputIcon} />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Enter phone number"
+                    placeholderTextColor="#999"
+                    value={phoneNumber}
+                    onChangeText={setPhoneNumber}
+                    keyboardType="phone-pad"
                 />
             </View>
 

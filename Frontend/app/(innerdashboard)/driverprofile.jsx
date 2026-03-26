@@ -8,6 +8,7 @@ import Spacer from "../../components/Spacer"
 import ThemedText from "../../components/ThemedText"
 import ThemedView from "../../components/ThemedView"
 import ThemedIonicons from '../../components/ThemedIonIcons'
+import { API_BASE } from '../../constants/API'
 
 const Profile2 = () => {
     const [name, setName] = useState('');
@@ -213,6 +214,15 @@ const Profile2 = () => {
                                 style={({pressed}) => [styles.modalButton, styles.modalButtonConfirm, pressed && {backgroundColor: 'rgba(197, 22, 16, 0.85)'}]}
                                 onPress={async () => {
                                     try {
+                                        const token = await AsyncStorage.getItem('token');
+                                        if (token) {
+                                            await fetch(`${API_BASE}/auth/driver/logout`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    Authorization: `Bearer ${token}`,
+                                                },
+                                            });
+                                        }
                                         await AsyncStorage.multiRemove(['token','userRole','userId','userName','userEmail']);
                                     } catch {}
                                     setLogoutModalVisible(false);

@@ -48,6 +48,14 @@ const driverSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isLoggedIn: {
+      type: Boolean,
+      default: false,
+    },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
     location: {
       type: {
         type: String,

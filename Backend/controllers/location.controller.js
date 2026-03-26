@@ -1,35 +1,15 @@
 const Driver = require('../models/driver')
 const axios = require('axios')
+const {
+  isDefaultCoordinate,
+  getVisibleSharedDrivers,
+  broadcastSharedDrivers,
+} = require('../utils/locationPresence')
 
 const OSRM_BASE = 'https://router.project-osrm.org/route/v1'
 
 const isValidCoordinate = (value, min, max) => 
   typeof value === 'number' && !Number.isNaN(value) && value >= min && value <= max
-
-const isDefaultCoordinate = (coords) => 
-  coords[0] === 0 && coords[1] === 0
-
-const mapDriverToResponse = (driver) => {
-  const [longitude, latitude] = driver.location?.coordinates || []
-  return {
-    driverId: driver._id,
-    name: driver.name,
-    sharing: true,
-    location: { latitude, longitude },
-    updatedAt: driver.lastLocationAt,
-  }
-}
-
-const getMappedSharedDrivers = async () => {
-  const drivers = await Driver.find({ sharingLocation: true })
-    .select(['_id', 'name', 'location', 'lastLocationAt', 'sharingLocation'])
-    .sort({ lastLocationAt: -1 })
-    .lean()
-
-  return drivers
-    .filter(d => d.sharingLocation && d.location?.coordinates && !isDefaultCoordinate(d.location.coordinates))
-    .map(mapDriverToResponse)
-}
 
 exports.shareLocation = async (req, res) => {
   try {
@@ -44,10 +24,11 @@ exports.shareLocation = async (req, res) => {
       return res.status(400).json({ message: 'Invalid coordinates' })
     }
 
-    const driver = await Driver.findByIdAndUpdate(
-      driverId,
+    const driver = await Driver.findOneAndUpdate(
+      { _id: driverId, isLoggedIn: true },
       {
         sharingLocation: Boolean(sharing),
+        isOnline: true,
         lastLocationAt: new Date(),
         location: {
           type: 'Point',
@@ -58,17 +39,14 @@ exports.shareLocation = async (req, res) => {
     )
 
     if (!driver) {
-      return res.status(404).json({ message: 'Driver not found' })
+      return res.status(403).json({ message: 'Driver session is inactive. Please login again.' })
     }
 
     const io = req.app.get('io')
-    if (io) {
-      try {
-        const mapped = await getMappedSharedDrivers()
-        io.emit('drivers:update', { sharing: mapped.length > 0, drivers: mapped })
-      } catch (emitError) {
-        console.error('Socket broadcast error:', emitError.message)
-      }
+    try {
+      await broadcastSharedDrivers(io)
+    } catch (emitError) {
+      console.error('Socket broadcast error:', emitError.message)
     }
 
     res.json({
@@ -86,7 +64,7 @@ exports.shareLocation = async (req, res) => {
 
 exports.getAllSharedLocations = async (_req, res) => {
   try {
-    const mapped = await getMappedSharedDrivers()
+    const mapped = await getVisibleSharedDrivers()
 
     res.json({ sharing: mapped.length > 0, drivers: mapped })
   } catch (error) {
@@ -110,14 +88,14 @@ exports.getDriverEta = async (req, res) => {
     }
 
     const driver = await Driver.findById(driverId)
-      .select(['_id', 'name', 'location', 'sharingLocation', 'lastLocationAt'])
+      .select(['_id', 'name', 'location', 'sharingLocation', 'isLoggedIn', 'isOnline', 'lastLocationAt'])
       .lean()
 
     if (!driver) {
       return res.status(404).json({ message: 'Driver not found' })
     }
 
-    if (!driver.sharingLocation || !driver.location?.coordinates || isDefaultCoordinate(driver.location.coordinates)) {
+    if (!driver.sharingLocation || !driver.isLoggedIn || !driver.isOnline || !driver.location?.coordinates || isDefaultCoordinate(driver.location.coordinates)) {
       return res.status(400).json({ message: 'Driver is not actively sharing location' })
     }
 

@@ -6,6 +6,8 @@ const http = require('http')
 const { Server } = require('socket.io')
 const jwt = require('jsonwebtoken')
 const connectDB = require('./config/db')
+const Driver = require('./models/driver')
+const { broadcastSharedDrivers } = require('./utils/locationPresence')
 
 const app = express()
 const server = http.createServer(app)
@@ -16,6 +18,7 @@ connectDB()
 // Middleware
 app.use(cors())
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 // Serve uploaded images statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
@@ -40,6 +43,19 @@ const io = new Server(server, {
   },
 })
 
+const driverSocketCounts = new Map()
+
+const setDriverPresence = async ({ driverId, isOnline }) => {
+  if (!driverId) return
+
+  const update = { isOnline }
+  if (isOnline) {
+    update.isLoggedIn = true
+  }
+
+  await Driver.findByIdAndUpdate(driverId, update)
+}
+
 io.use((socket, next) => {
   const token = socket.handshake?.auth?.token
   if (!token) {
@@ -55,7 +71,35 @@ io.use((socket, next) => {
 })
 
 io.on('connection', (socket) => {
-  socket.on('disconnect', () => {})
+  const isDriver = socket.user?.role === 'driver'
+  const driverId = isDriver ? String(socket.user.id) : null
+
+  if (driverId) {
+    const current = driverSocketCounts.get(driverId) || 0
+    driverSocketCounts.set(driverId, current + 1)
+
+    setDriverPresence({ driverId, isOnline: true })
+      .then(() => broadcastSharedDrivers(io))
+      .catch((error) => console.error('Driver connect presence error:', error.message))
+  }
+
+  socket.on('disconnect', () => {
+    if (!driverId) return
+
+    const current = driverSocketCounts.get(driverId) || 0
+    const next = Math.max(0, current - 1)
+
+    if (next > 0) {
+      driverSocketCounts.set(driverId, next)
+      return
+    }
+
+    driverSocketCounts.delete(driverId)
+
+    setDriverPresence({ driverId, isOnline: false })
+      .then(() => broadcastSharedDrivers(io))
+      .catch((error) => console.error('Driver disconnect presence error:', error.message))
+  })
 })
 
 app.set('io', io)
