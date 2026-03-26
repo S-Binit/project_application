@@ -88,6 +88,22 @@ const DriverManagement = () => {
           </View>
           <Ionicons name="chevron-forward" size={24} color="#999" />
         </TouchableOpacity>
+
+        <Spacer height={15} />
+
+        {/* Reset Driver Password */}
+        <TouchableOpacity 
+          style={styles.optionCard}
+          onPress={() => router.push('/(admin)/resetdriverpassword')}>
+          <View style={[styles.iconContainer, { backgroundColor: '#fff7e6' }]}> 
+            <Ionicons name="key" size={32} color="#FF9800" />
+          </View>
+          <View style={styles.optionTextContainer}>
+            <ThemedText style={styles.optionTitle}>Reset Driver Password</ThemedText>
+            <ThemedText style={styles.optionDescription}>Change password when driver forgets it</ThemedText>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#999" />
+        </TouchableOpacity>
       </View>
     </ThemedView>
   )

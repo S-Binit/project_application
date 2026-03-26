@@ -14,6 +14,7 @@ import {
     addUserNotification,
     removeDriverNotifications,
 } from '../../utils/notifications'
+import { sendLocalNotification } from '../../utils/pushNotifications'
 
 const TILE_URL = Constants?.expoConfig?.extra?.TILE_URL
 const TILE_USER_AGENT = Constants?.expoConfig?.extra?.TILE_USER_AGENT
@@ -347,7 +348,13 @@ const Map1 = () => {
                 await addUserNotification(notification)
 
                 if (isMounted) {
-                    Alert.alert('Driver Nearby', message)
+                    const shown = await sendLocalNotification('Driver Nearby', message, {
+                        driverId: marker.key,
+                    })
+
+                    if (!shown) {
+                        Alert.alert('Driver Nearby', message)
+                    }
                 }
             }
 

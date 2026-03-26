@@ -115,6 +115,11 @@ const DashboardLayout = () => {
                   options={{
                       href: null
                   }} />
+              <Tabs.Screen
+                  name="resetdriverpassword"
+                  options={{
+                      href: null
+                  }} />
           </Tabs>     
   )
 }
